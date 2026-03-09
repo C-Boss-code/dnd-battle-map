@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D&D Battle Map</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0d0d1a;
+      color: #ddd;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #12122a;
+      border-bottom: 2px solid #8b0000;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      color: #c0392b;
+      letter-spacing: 0.05em;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+    .btn:hover { filter: brightness(1.2); }
+    .btn-dark {
+      background: #1e1e3a;
+      color: #ccc;
+      border: 1px solid #333;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #1e1e3a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 3px 6px;
+    }
+
+    .zoom-controls button {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .zoom-controls button:hover { background: #2e2e5a; color: #fff; }
+
+    .zoom-label {
+      font-size: 0.78rem;
+      color: #888;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    /* ── Connection status ── */
+    .conn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #555;
+      transition: background 0.4s;
+    }
+    .conn-dot.online  { background: #27ae60; }
+    .conn-dot.offline { background: #c0392b; }
+
+    /* ── Main layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 200px;
+      min-width: 200px;
+      background: #12122a;
+      padding: 16px;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: width 0.25s ease, min-width 0.25s ease, padding 0.25s ease;
+    }
+
+    .sidebar.collapsed {
+      width: 0;
+      min-width: 0;
+      padding: 0;
+    }
+
+    /* The thin strip that toggles the sidebar open/closed */
+    .sidebar-toggle {
+      width: 16px;
+      background: #1a1a32;
+      border: none;
+      border-left:  1px solid #2a2a4a;
+      border-right: 1px solid #2a2a4a;
+      color: #556;
+      cursor: pointer;
+      font-size: 0.6rem;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-toggle:hover {
+      background: #2a2a4a;
+      color: #aaa;
+    }
+
+    .sidebar-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-empty {
+      font-size: 0.78rem;
+      color: #444;
+      text-align: center;
+      padding: 20px 0;
+      line-height: 1.6;
+    }
+
+    /* ── Map area ── */
+    .map-area {
+      flex: 1;
+      overflow: auto;
+      background: #080810;
+    }
+
+    /* Canvas sized dynamically by JS — just enough padding around the grid.
+       The grid sits in the exact centre. */
+    .map-inner {
+      position: relative;
+      /* width & height set by JS in resizeCanvas() */
+    }
+
+    .grid-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── Grid ── */
+
+    /* Background image layer (empty for now) */
+    #grid-bg {
+      position: absolute;
+      inset: 0;
+      background-color: #1a1a2e;
+      background-size: cover;
+      background-position: center;
+    }
+
+    #grid {
+      display: grid;
+      position: relative; /* tokens will be positioned inside here later */
+      border: 2px solid #5a5a8a;
+    }
+
+    .cell {
+      width: 70px;
+      height: 70px;
+      border: 1px solid rgba(120, 120, 180, 0.3);
+    }
+
+    /* Subtle checkerboard tint to help count squares */
+    .cell.shade {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ── Buttons ── */
+    .btn-red {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    /* ── Token chip on the board ── */
+    .token {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.45);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6), inset 0 -2px 4px rgba(0,0,0,0.35);
+      user-select: none;
+      touch-action: none;
+      z-index: 10;
+      cursor: grab;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .token:hover {
+      transform: scale(1.08);
+      z-index: 20;
+      border-color: rgba(255,255,255,0.8);
+    }
+    .token.dragging {
+      cursor: grabbing;
+      transform: scale(1.12);
+      z-index: 100;
+      opacity: 0.9;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+      transition: none; /* instant movement while dragging */
+    }
+
+    /* Highlight cells the token will land on */
+    .cell.drag-over {
+      background: rgba(192, 57, 43, 0.25) !important;
+      border-color: rgba(192, 57, 43, 0.7) !important;
+    }
+
+    .token-label {
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.82);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    /* ── Sidebar token cards ── */
+    .token-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a1a30;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+
+    .mini-chip {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .token-card-name {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .del-btn {
+      position: relative;
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .del-ring {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);  /* start fill from the top */
+      pointer-events: none;
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: rgba(255,255,255,0.07);
+      stroke-width: 2.5;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke: #c0392b;
+      stroke-width: 2.5;
+      stroke-dasharray: 62.83;   /* 2 * π * r(10) */
+      stroke-dashoffset: 62.83;  /* fully hidden at start */
+      transition: none;
+    }
+
+    /* When holding: animate the ring filling over 1 second */
+    .del-btn.holding .ring-fill {
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .del-icon {
+      font-size: 0.72rem;
+      color: #555;
+      pointer-events: none;
+      position: relative;
+    }
+    .del-btn:hover .del-icon   { color: #aaa; }
+    .del-btn.holding .del-icon { color: #c0392b; }
+
+    /* ── Add Token modal ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+
+    .modal {
+      background: #12122a;
+      border: 1px solid #2a2a50;
+      border-radius: 12px;
+      padding: 24px;
+      width: 300px;
+      max-width: calc(100vw - 32px);
+    }
+
+    .modal h2 {
+      font-size: 1rem;
+      color: #c0392b;
+      margin-bottom: 18px;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: #999;
+      margin-bottom: 5px;
+    }
+    .field input[type="text"] {
+      width: 100%;
+      background: #1a1a30;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      color: #eee;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .field input[type="text"]:focus { border-color: #c0392b; }
+    .field input[type="text"].error {
+      border-color: #c0392b;
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+
+    .field input[type="color"] {
+      width: 48px;
+      height: 34px;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      background: #1a1a30;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .field select {
+      width: 100%;
+      background: #1a1a30;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      color: #eee;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .field select:focus { border-color: #c0392b; }
+
+    .size-badge {
+      font-size: 0.65rem;
+      color: #888;
+      background: #1a1a30;
+      border: 1px solid #2a2a4a;
+      border-radius: 3px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Hide the real file input, style the label as a button */
+    input[type="file"] { display: none; }
+
+    .btn-ghost {
+      background: none;
+      color: #c0392b;
+      border: 1px solid #c0392b;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: none; /* shown by JS when a map is loaded */
+    }
+    .btn-ghost:hover { background: rgba(192,57,43,0.15); }
+    .btn-ghost.visible { display: inline-block; }
+
+    /* ── Token condition ring & tooltip ── */
+    .token.has-condition {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6), inset 0 -2px 4px rgba(0,0,0,0.35),
+                  0 0 0 3px rgba(255,255,255,0.9);
+    }
+    .token.dragging.has-condition {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.8), 0 0 0 3px rgba(255,255,255,0.9);
+    }
+
+    .token-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.88);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 5px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 30;
+      border: 1px solid rgba(255,255,255,0.15);
+      max-width: 160px;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .token:hover .token-tooltip { opacity: 1; }
+
+    /* ── Edit (pencil) button in sidebar ── */
+    .edit-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #555;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 4px;
+      padding: 0;
+    }
+    .edit-btn:hover { color: #aaa; background: #2a2a4a; }
+
+    /* ── Crop modal ── */
+    .crop-modal {
+      background: #12122a;
+      border: 1px solid #2a2a50;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .crop-modal h2 {
+      font-size: 1rem;
+      color: #c0392b;
+      margin: 0;
+    }
+
+    /* ── Edit Token modal ── */
+    .edit-section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .edit-portrait-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .edit-portrait-preview {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #1a1a30;
+      border: 2px solid #2a2a4a;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .edit-condition-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .edit-condition-row input {
+      flex: 1;
+      background: #1a1a30;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      color: #eee;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .edit-condition-row input:focus { border-color: #c0392b; }
+
+    .condition-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+
+    .condition-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #1e1e3a;
+      border: 1px solid #3a3a5a;
+      border-radius: 20px;
+      padding: 3px 8px 3px 11px;
+      font-size: 0.76rem;
+      color: #ccc;
+    }
+
+    .condition-tag-remove {
+      background: none;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
+    .condition-tag-remove:hover { color: #c0392b; }
+
+    .crop-container {
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .crop-container img {
+      display: block;
+      user-select: none;
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+
+    .crop-circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+      cursor: move;
+      z-index: 10;
+      touch-action: none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚔ D&D Battle Map</h1>
+    <div class="conn-pill">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-text">Connecting…</span>
+    </div>
+    <div class="header-right">
+      <div class="zoom-controls">
+        <button id="zoom-out">−</button>
+        <span class="zoom-label" id="zoom-label">100%</span>
+        <button id="zoom-in">+</button>
+      </div>
+      <button class="btn btn-dark" id="rotate-btn">⟳ Rotate</button>
+      <label  class="btn btn-dark" for="bg-upload">🗺 Upload Map</label>
+      <input  type="file" id="bg-upload"  accept="image/*">
+      <input  type="file" id="img-upload" accept="image/*">
+      <button class="btn-ghost" id="clear-map-btn">✕ Clear Map</button>
+      <button class="btn btn-red"  id="add-token-btn">+ Add Token</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-title">Tokens on board</div>
+      <div id="token-list">
+        <div class="sidebar-empty">No tokens yet.</div>
+      </div>
+    </aside>
+
+    <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◀</button>
+
+    <div class="map-area">
+      <div class="map-inner">
+        <div class="grid-wrapper">
+          <div id="grid-bg"></div>
+          <div id="grid">
+            <!-- Cells are generated by the script below -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Edit Token modal -->
+  <div class="overlay" id="edit-overlay">
+    <div class="modal">
+      <h2>Edit Token</h2>
+
+      <div class="edit-section-title">Portrait</div>
+      <div class="edit-portrait-row">
+        <div class="edit-portrait-preview" id="edit-portrait-preview"></div>
+        <button class="btn btn-dark" id="edit-upload-btn">Upload Image</button>
+      </div>
+
+      <div class="edit-section-title">Status Conditions</div>
+      <div class="edit-condition-row">
+        <input type="text" id="edit-condition-input" placeholder="e.g. Poisoned" maxlength="30">
+        <button class="btn btn-red" id="edit-condition-add">Add</button>
+      </div>
+      <div class="condition-tags" id="edit-condition-tags"></div>
+
+      <div class="modal-footer">
+        <button class="btn btn-dark" id="edit-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crop modal -->
+  <div class="overlay" id="crop-overlay">
+    <div class="crop-modal">
+      <h2>Crop Token Image</h2>
+      <div class="crop-container" id="crop-container">
+        <img id="crop-img" draggable="false" alt="">
+        <div class="crop-circle" id="crop-circle"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-dark" id="crop-cancel">Cancel</button>
+        <button class="btn btn-red"  id="crop-confirm">Use this crop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Token modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Add Token</h2>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. Gandalf" maxlength="20">
+      </div>
+      <div class="field">
+        <label>Colour</label>
+        <input type="color" id="f-color" value="#c0392b">
+      </div>
+      <div class="field">
+        <label>Size</label>
+        <select id="f-size">
+          <option value="small">Small — 5×5 ft (1 square)</option>
+          <option value="medium" selected>Medium — 5×5 ft (1 square)</option>
+          <option value="large">Large — 10×10 ft (2×2 squares)</option>
+          <option value="huge">Huge — 15×15 ft (3×3 squares)</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-dark" id="modal-cancel">Cancel</button>
+        <button class="btn btn-red"  id="modal-save">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // ── Firebase setup ──────────────────────────────────────────
+    const app = initializeApp({
+      apiKey:            "AIzaSyCLjGHc9VR1ah4VGc4nVsID6VbLjvtWMUY",
+      authDomain:        "dnd-battle-map-4e065.firebaseapp.com",
+      databaseURL:       "https://dnd-battle-map-4e065-default-rtdb.firebaseio.com",
+      projectId:         "dnd-battle-map-4e065",
+      storageBucket:     "dnd-battle-map-4e065.firebasestorage.app",
+      messagingSenderId: "631966836270",
+      appId:             "1:631966836270:web:58fcffd10d1590f9dce1bf"
+    });
+
+    const db      = getDatabase(app);
+    const connDot  = document.getElementById('conn-dot');
+    const connText = document.getElementById('conn-text');
+
+    // Firebase has a special path that tells us if we're connected
+    onValue(ref(db, '.info/connected'), (snap) => {
+      if (snap.val() === true) {
+        connDot.className  = 'conn-dot online';
+        connText.textContent = 'Connected';
+      } else {
+        connDot.className  = 'conn-dot offline';
+        connText.textContent = 'Disconnected';
+      }
+    });
+
+    // ── Background map ──────────────────────────────────────────
+    const gridBg      = document.getElementById('grid-bg');
+    const clearMapBtn = document.getElementById('clear-map-btn');
+
+    // Compress an image to fit within maxW x maxH at given quality
+    function compressImage(file, maxW, maxH, quality = 0.85) {
+      return new Promise((resolve) => {
+        const img    = new Image();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.onload = () => {
+            const ratio  = Math.min(maxW / img.width, maxH / img.height, 1);
+            const canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.width  * ratio);
+            canvas.height = Math.round(img.height * ratio);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Upload map: compress then push to Firebase
+    document.getElementById('bg-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      // Grid pixel size at 100% zoom: 8*70=560 wide, 11*70=770 tall
+      // Store at 2× for sharp display on high-DPI screens
+      const dataUrl = await compressImage(file, 1120, 1540);
+      set(ref(db, 'board/background'), dataUrl);
+      e.target.value = ''; // allow re-uploading same file
+    });
+
+    // Clear map button
+    clearMapBtn.addEventListener('click', () => {
+      set(ref(db, 'board/background'), null);
+    });
+
+    // Listen for background changes from Firebase
+    onValue(ref(db, 'board/background'), (snap) => {
+      const url = snap.val();
+      if (url) {
+        gridBg.style.backgroundImage = `url(${url})`;
+        clearMapBtn.classList.add('visible');
+      } else {
+        gridBg.style.backgroundImage = '';
+        clearMapBtn.classList.remove('visible');
+      }
+    });
+
+    // Listen for orientation changes — fired on ALL connected clients
+    onValue(ref(db, 'board/orientation'), (snap) => {
+      if (snap.val() !== null) isPortrait = snap.val();
+      buildGrid();
+    });
+
+    // ── Grid & UI ───────────────────────────────────────────────
+    const grid        = document.getElementById('grid');
+    const zoomLabel   = document.getElementById('zoom-label');
+    const mapArea     = document.getElementById('map-area');
+
+    const BASE_CELL   = 70;   // px at 100%
+    const ZOOM_STEPS  = [40, 50, 60, 75, 100, 125, 150, 175, 200];
+    let zoomIndex     = 4;    // start at index 4 = 100%
+    let isPortrait    = true;
+
+    function cellSize() {
+      return Math.round(BASE_CELL * ZOOM_STEPS[zoomIndex] / 100);
+    }
+
+    function buildGrid() {
+      const cols = isPortrait ? 8  : 11;
+      const rows = isPortrait ? 11 : 8;
+      const cs   = cellSize();
+
+      grid.style.gridTemplateColumns = `repeat(${cols}, ${cs}px)`;
+      grid.style.gridTemplateRows    = `repeat(${rows}, ${cs}px)`;
+
+      grid.innerHTML = '';
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.style.width  = cs + 'px';
+          cell.style.height = cs + 'px';
+          if ((r + c) % 2 === 0) cell.classList.add('shade');
+          grid.appendChild(cell);
+        }
+      }
+
+      zoomLabel.textContent = ZOOM_STEPS[zoomIndex] + '%';
+      renderTokens();
+      resizeAndCenterMap();
+    }
+
+    function zoomIn() {
+      if (zoomIndex < ZOOM_STEPS.length - 1) { zoomIndex++; buildGrid(); }
+    }
+
+    function zoomOut() {
+      if (zoomIndex > 0) { zoomIndex--; buildGrid(); }
+    }
+
+    document.getElementById('zoom-in').addEventListener('click', zoomIn);
+    document.getElementById('zoom-out').addEventListener('click', zoomOut);
+
+    document.getElementById('rotate-btn').addEventListener('click', () => {
+      const newPortrait = !isPortrait;
+      const newCols     = newPortrait ? 8  : 11;
+      const newRows     = newPortrait ? 11 : 8;
+
+      // Build a single Firebase update: orientation + any out-of-bounds tokens
+      const changes = { 'board/orientation': newPortrait };
+
+      Object.values(tokens).forEach(t => {
+        const sq     = sizeToSquares(t.size);
+        const newRow = Math.min(t.row, newRows - sq);
+        const newCol = Math.min(t.col, newCols - sq);
+        if (newRow !== t.row) changes[`board/tokens/${t.id}/row`] = newRow;
+        if (newCol !== t.col) changes[`board/tokens/${t.id}/col`] = newCol;
+      });
+
+      update(ref(db), changes); // one atomic write — triggers listeners on all clients
+    });
+
+    // Ctrl + scroll wheel to zoom
+    document.querySelector('.map-area').addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      e.deltaY < 0 ? zoomIn() : zoomOut();
+    }, { passive: false });
+
+    // Resize the canvas to just fit the grid + comfortable padding, then centre
+    function resizeAndCenterMap() {
+      const mapArea = document.querySelector('.map-area');
+      const inner   = document.querySelector('.map-inner');
+      const cols    = isPortrait ? 8  : 11;
+      const rows    = isPortrait ? 11 : 8;
+      const cs      = cellSize();
+      const gridW   = cols * cs + 4;   // +4 for the 2px border each side
+      const gridH   = rows * cs + 4;
+      const pad     = Math.max(80, cs * 2);   // at least 80px, or 2 cells
+
+      // Canvas must be at least as large as the viewport so centering works
+      const canvasW = Math.max(gridW + pad * 2, mapArea.clientWidth);
+      const canvasH = Math.max(gridH + pad * 2, mapArea.clientHeight);
+
+      inner.style.width  = canvasW + 'px';
+      inner.style.height = canvasH + 'px';
+
+      requestAnimationFrame(() => {
+        mapArea.scrollLeft = (mapArea.scrollWidth  - mapArea.clientWidth)  / 2;
+        mapArea.scrollTop  = (mapArea.scrollHeight - mapArea.clientHeight) / 2;
+      });
+    }
+
+    // ── Token state ────────────────────────────────────────────
+    let tokens = {};
+
+    // Listen for any token changes in Firebase → re-render
+    onValue(ref(db, 'board/tokens'), (snap) => {
+      tokens = snap.val() || {};
+      renderTokens();
+      renderSidebar();
+      refreshEditModal();
+    });
+
+    // How many grid squares does this size occupy?
+    function sizeToSquares(size) {
+      if (size === 'large') return 2;
+      if (size === 'huge')  return 3;
+      return 1;
+    }
+
+    // Work out token pixel size & position from current zoom + creature size
+    function tokenLayout(row, col, size) {
+      const cs  = cellSize();
+      const sq  = sizeToSquares(size);
+      if (sq === 1) {
+        const ts     = Math.max(20, Math.round(cs * 0.76));
+        const offset = Math.round((cs - ts) / 2);
+        return { ts, top: row * cs + offset, left: col * cs + offset };
+      }
+      // Multi-square: fill the squares with a small inset so grid lines show
+      const inset = 4;
+      const ts    = sq * cs - inset;
+      return { ts, top: row * cs + inset / 2, left: col * cs + inset / 2 };
+    }
+
+    let draggingId = null;
+
+    function renderTokens() {
+      // Remove every token except the one currently being dragged
+      grid.querySelectorAll('.token').forEach(el => {
+        if (el.dataset.id !== draggingId) el.remove();
+      });
+      Object.values(tokens).forEach(t => {
+        if (t.id === draggingId) return; // leave the live drag element alone
+        grid.appendChild(buildTokenEl(t));
+      });
+    }
+
+    function buildTokenEl(t) {
+      const { ts, top, left } = tokenLayout(t.row, t.col, t.size);
+      const el = document.createElement('div');
+      el.className  = 'token';
+      el.dataset.id = t.id;
+      el.style.cssText = `width:${ts}px;height:${ts}px;top:${top}px;left:${left}px;background:${t.color||'#c0392b'};`;
+
+      // Initial letter (hidden when a portrait image is set)
+      const letter = document.createElement('span');
+      letter.style.fontSize = Math.max(8, Math.round(ts * 0.42)) + 'px';
+      letter.textContent = (t.name || '?')[0].toUpperCase();
+      el.appendChild(letter);
+
+      if (t.image) {
+        el.style.backgroundImage    = `url(${t.image})`;
+        el.style.backgroundSize     = 'cover';
+        el.style.backgroundPosition = 'center';
+        letter.style.display = 'none';
+      }
+
+      // Condition ring + tooltip
+      const conditions = Object.values(t.conditions || {});
+      if (conditions.length > 0) {
+        el.classList.add('has-condition');
+        const tip = document.createElement('div');
+        tip.className   = 'token-tooltip';
+        tip.textContent = conditions.join(' · ');
+        el.appendChild(tip);
+      }
+
+      // Name label below the chip
+      const lbl = document.createElement('div');
+      lbl.className   = 'token-label';
+      lbl.textContent = t.name || '';
+      el.appendChild(lbl);
+
+      attachDrag(el, t.id);
+      return el;
+    }
+
+    // ── Drag & drop ─────────────────────────────────────────────
+    function attachDrag(el, tokenId) {
+      let startClientX, startClientY, startLeft, startTop;
+
+      el.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        draggingId = tokenId;
+        el.setPointerCapture(e.pointerId);
+        el.classList.add('dragging');
+
+        startClientX = e.clientX;
+        startClientY = e.clientY;
+        startLeft    = parseInt(el.style.left);
+        startTop     = parseInt(el.style.top);
+      });
+
+      el.addEventListener('pointermove', (e) => {
+        if (draggingId !== tokenId) return;
+        e.preventDefault();
+
+        el.style.left = (startLeft + e.clientX - startClientX) + 'px';
+        el.style.top  = (startTop  + e.clientY - startClientY) + 'px';
+
+        highlightCells(e.clientX, e.clientY, tokens[tokenId]?.size);
+      });
+
+      el.addEventListener('pointerup', (e) => {
+        if (draggingId !== tokenId) return;
+
+        el.classList.remove('dragging');
+        clearHighlight();
+        draggingId = null;
+
+        const { row, col } = snapToCell(e.clientX, e.clientY, tokens[tokenId]?.size);
+
+        // Snap the element visually right away
+        const layout = tokenLayout(row, col, tokens[tokenId]?.size);
+        el.style.top  = layout.top  + 'px';
+        el.style.left = layout.left + 'px';
+
+        // Persist to Firebase
+        if (tokens[tokenId]) {
+          tokens[tokenId].row = row;
+          tokens[tokenId].col = col;
+          set(ref(db, `board/tokens/${tokenId}`), tokens[tokenId]);
+        }
+      });
+
+      // Pointer left the window while dragging — snap back
+      el.addEventListener('lostpointercapture', () => {
+        if (draggingId === tokenId) {
+          clearHighlight();
+          draggingId = null;
+          renderTokens();
+        }
+      });
+    }
+
+    // Work out which cell the pointer is over, clamped to grid bounds
+    function snapToCell(clientX, clientY, size) {
+      const rect = grid.getBoundingClientRect();
+      const cs   = cellSize();
+      const cols = isPortrait ? 8  : 11;
+      const rows = isPortrait ? 11 : 8;
+      const sq   = sizeToSquares(size);
+
+      let col = Math.floor((clientX - rect.left) / cs);
+      let row = Math.floor((clientY - rect.top)  / cs);
+
+      // Clamp so token stays fully inside the grid
+      col = Math.max(0, Math.min(cols - sq, col));
+      row = Math.max(0, Math.min(rows - sq, row));
+
+      return { row, col };
+    }
+
+    function highlightCells(clientX, clientY, size) {
+      clearHighlight();
+      const { row, col } = snapToCell(clientX, clientY, size);
+      const sq   = sizeToSquares(size);
+      const cols = isPortrait ? 8 : 11;
+
+      for (let r = row; r < row + sq; r++) {
+        for (let c = col; c < col + sq; c++) {
+          const cellEl = grid.children[r * cols + c];
+          if (cellEl?.classList.contains('cell')) cellEl.classList.add('drag-over');
+        }
+      }
+    }
+
+    function clearHighlight() {
+      grid.querySelectorAll('.cell.drag-over').forEach(c => c.classList.remove('drag-over'));
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('token-list');
+      list.innerHTML = '';
+      const arr = Object.values(tokens);
+
+      if (!arr.length) {
+        list.innerHTML = '<div class="sidebar-empty">No tokens yet.</div>';
+        return;
+      }
+
+      arr.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'token-card';
+
+        const chip = document.createElement('div');
+        chip.className = 'mini-chip';
+        chip.style.background = t.color || '#c0392b';
+        chip.textContent = (t.name || '?')[0].toUpperCase();
+
+        const name = document.createElement('div');
+        name.className = 'token-card-name';
+        name.textContent = t.name || 'Unnamed';
+
+        const sizeBadge = document.createElement('span');
+        sizeBadge.className = 'size-badge';
+        const sizeLabels = { small:'S', medium:'M', large:'L', huge:'H' };
+        sizeBadge.textContent = sizeLabels[t.size] || 'M';
+
+        const del = document.createElement('button');
+        del.className = 'del-btn';
+        del.title     = 'Hold to delete';
+        del.innerHTML = `
+          <svg class="del-ring" viewBox="0 0 24 24">
+            <circle class="ring-track" cx="12" cy="12" r="10"/>
+            <circle class="ring-fill"  cx="12" cy="12" r="10"/>
+          </svg>
+          <span class="del-icon">✕</span>`;
+
+        let holdTimer = null;
+        del.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          del.setPointerCapture(e.pointerId);
+          del.classList.add('holding');
+          holdTimer = setTimeout(() => {
+            remove(ref(db, `board/tokens/${t.id}`));
+          }, 1000);
+        });
+        const cancelHold = () => {
+          del.classList.remove('holding');
+          clearTimeout(holdTimer);
+        };
+        del.addEventListener('pointerup',    cancelHold);
+        del.addEventListener('pointerleave', cancelHold);
+
+        const editBtn = document.createElement('button');
+        editBtn.className   = 'edit-btn';
+        editBtn.title       = 'Upload portrait image';
+        editBtn.textContent = '✎';
+        editBtn.addEventListener('click', () => openEditModal(t.id));
+
+        card.appendChild(chip);
+        card.appendChild(name);
+        card.appendChild(sizeBadge);
+        card.appendChild(editBtn);
+        card.appendChild(del);
+        list.appendChild(card);
+      });
+    }
+
+    // ── Add Token modal ─────────────────────────────────────────
+    const overlay = document.getElementById('overlay');
+    const fName   = document.getElementById('f-name');
+    const fColor  = document.getElementById('f-color');
+    const fSize   = document.getElementById('f-size');
+
+    document.getElementById('add-token-btn').addEventListener('click', () => {
+      fName.value  = '';
+      fColor.value = '#c0392b';
+      fSize.value  = 'medium';
+      overlay.classList.add('show');
+      fName.focus();
+    });
+
+    function closeModal() { overlay.classList.remove('show'); }
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+    document.getElementById('modal-save').addEventListener('click', () => {
+      const name = fName.value.trim();
+      if (!name) {
+        fName.classList.add('error');
+        fName.focus();
+        setTimeout(() => fName.classList.remove('error'), 600);
+        return;
+      }
+      const id = 'tk_' + Date.now();
+      set(ref(db, `board/tokens/${id}`), { id, name, color: fColor.value, size: fSize.value, row: 0, col: 0 });
+      closeModal();
+    });
+
+    // Allow pressing Enter to submit
+    fName.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('modal-save').click();
+    });
+
+    // ── Sidebar toggle ──
+    const sidebar       = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+
+    sidebarToggle.addEventListener('click', () => {
+      const collapsed = sidebar.classList.toggle('collapsed');
+      sidebarToggle.textContent = collapsed ? '▶' : '◀';
+      sidebarToggle.title       = collapsed ? 'Show sidebar' : 'Hide sidebar';
+    });
+
+    // ── Edit Token modal ─────────────────────────────────────────
+    let editTokenId = null;
+
+    function openEditModal(tokenId) {
+      editTokenId = tokenId;
+      refreshEditModal();
+      document.getElementById('edit-overlay').classList.add('show');
+      document.getElementById('edit-condition-input').value = '';
+    }
+
+    function refreshEditModal() {
+      if (!editTokenId) return;
+      const t = tokens[editTokenId];
+      if (!t) return;
+
+      // Portrait preview
+      const preview = document.getElementById('edit-portrait-preview');
+      if (t.image) {
+        preview.style.backgroundImage = `url(${t.image})`;
+        preview.style.background      = `url(${t.image}) center/cover`;
+        preview.textContent = '';
+      } else {
+        preview.style.backgroundImage = '';
+        preview.style.background      = t.color || '#c0392b';
+        preview.textContent = (t.name || '?')[0].toUpperCase();
+      }
+
+      // Conditions
+      const tagsEl = document.getElementById('edit-condition-tags');
+      tagsEl.innerHTML = '';
+      Object.entries(t.conditions || {}).forEach(([key, text]) => {
+        const tag = document.createElement('span');
+        tag.className = 'condition-tag';
+        const label = document.createTextNode(text + ' ');
+        const btn   = document.createElement('button');
+        btn.className   = 'condition-tag-remove';
+        btn.title       = 'Remove';
+        btn.textContent = '✕';
+        btn.addEventListener('click', () => remove(ref(db, `board/tokens/${editTokenId}/conditions/${key}`)));
+        tag.appendChild(label);
+        tag.appendChild(btn);
+        tagsEl.appendChild(tag);
+      });
+    }
+
+    document.getElementById('edit-upload-btn').addEventListener('click', () => {
+      const imgInput = document.getElementById('img-upload');
+      imgInput.dataset.tokenId = editTokenId;
+      imgInput.click();
+    });
+
+    document.getElementById('edit-condition-add').addEventListener('click', () => {
+      const input = document.getElementById('edit-condition-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      const key = 'c_' + Date.now();
+      set(ref(db, `board/tokens/${editTokenId}/conditions/${key}`), text);
+      input.value = '';
+      input.focus();
+    });
+
+    document.getElementById('edit-condition-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('edit-condition-add').click();
+    });
+
+    document.getElementById('edit-close').addEventListener('click', () => {
+      document.getElementById('edit-overlay').classList.remove('show');
+      editTokenId = null;
+    });
+
+    document.getElementById('edit-overlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('edit-overlay')) {
+        document.getElementById('edit-overlay').classList.remove('show');
+        editTokenId = null;
+      }
+    });
+
+    // ── Token image & crop ───────────────────────────────────────
+    let cropTokenId   = null;
+    let cropNatImg    = null;
+    let cropX, cropY, cropR;
+    let imgDisplayW,  imgDisplayH;
+
+    document.getElementById('img-upload').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      cropTokenId = e.target.dataset.tokenId;
+      openCropModal(file);
+      e.target.value = '';
+    });
+
+    function openCropModal(file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          cropNatImg = img;
+          const maxW  = Math.min(440, window.innerWidth  - 80);
+          const maxH  = Math.min(360, window.innerHeight - 200);
+          const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+          imgDisplayW = Math.round(img.naturalWidth  * ratio);
+          imgDisplayH = Math.round(img.naturalHeight * ratio);
+
+          const imgEl = document.getElementById('crop-img');
+          imgEl.src          = ev.target.result;
+          imgEl.style.width  = imgDisplayW + 'px';
+          imgEl.style.height = imgDisplayH + 'px';
+
+          const container = document.getElementById('crop-container');
+          container.style.width  = imgDisplayW + 'px';
+          container.style.height = imgDisplayH + 'px';
+
+          cropR = Math.round(Math.min(imgDisplayW, imgDisplayH) * 0.38);
+          cropX = Math.round(imgDisplayW / 2);
+          cropY = Math.round(imgDisplayH / 2);
+
+          updateCropCircle();
+          document.getElementById('crop-overlay').classList.add('show');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateCropCircle() {
+      const el = document.getElementById('crop-circle');
+      el.style.width  = (cropR * 2) + 'px';
+      el.style.height = (cropR * 2) + 'px';
+      el.style.left   = (cropX - cropR) + 'px';
+      el.style.top    = (cropY - cropR) + 'px';
+    }
+
+    // Move or resize based on where in the circle the pointer lands
+    const cropCircleEl = document.getElementById('crop-circle');
+    const EDGE_PX      = 16; // px from border that counts as "edge zone"
+
+    function distFromCropCenter(clientX, clientY) {
+      const rect = cropCircleEl.getBoundingClientRect();
+      const dx   = clientX - (rect.left + cropR);
+      const dy   = clientY - (rect.top  + cropR);
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Update cursor to hint move vs resize
+    cropCircleEl.addEventListener('pointermove', (e) => {
+      if (e.buttons !== 0) return; // don't flicker cursor while dragging
+      cropCircleEl.style.cursor = distFromCropCenter(e.clientX, e.clientY) > cropR - EDGE_PX
+        ? 'nwse-resize'
+        : 'move';
+    });
+
+    cropCircleEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      cropCircleEl.setPointerCapture(e.pointerId);
+
+      const isEdge = distFromCropCenter(e.clientX, e.clientY) > cropR - EDGE_PX;
+
+      if (isEdge) {
+        // ── Resize mode: track distance from circle center ──
+        const containerRect = document.getElementById('crop-container').getBoundingClientRect();
+        const centerCX      = containerRect.left + cropX;
+        const centerCY      = containerRect.top  + cropY;
+
+        const onMove = (me) => {
+          const dx   = me.clientX - centerCX;
+          const dy   = me.clientY - centerCY;
+          const dist = Math.round(Math.sqrt(dx * dx + dy * dy));
+          const maxR = Math.min(cropX, cropY, imgDisplayW - cropX, imgDisplayH - cropY);
+          cropR = Math.max(20, Math.min(maxR, dist));
+          updateCropCircle();
+        };
+        const onUp = () => {
+          cropCircleEl.removeEventListener('pointermove', onMove);
+          cropCircleEl.removeEventListener('pointerup',   onUp);
+        };
+        cropCircleEl.addEventListener('pointermove', onMove);
+        cropCircleEl.addEventListener('pointerup',   onUp);
+
+      } else {
+        // ── Move mode: drag the circle around ──
+        const startX  = e.clientX, startY  = e.clientY;
+        const startCX = cropX,     startCY = cropY;
+
+        const onMove = (me) => {
+          cropX = Math.max(cropR, Math.min(imgDisplayW - cropR, startCX + me.clientX - startX));
+          cropY = Math.max(cropR, Math.min(imgDisplayH - cropR, startCY + me.clientY - startY));
+          updateCropCircle();
+        };
+        const onUp = () => {
+          cropCircleEl.removeEventListener('pointermove', onMove);
+          cropCircleEl.removeEventListener('pointerup',   onUp);
+        };
+        cropCircleEl.addEventListener('pointermove', onMove);
+        cropCircleEl.addEventListener('pointerup',   onUp);
+      }
+    });
+
+    // Confirm: canvas-crop → save to Firebase
+    document.getElementById('crop-confirm').addEventListener('click', () => {
+      const out    = 200;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = out;
+      const ctx    = canvas.getContext('2d');
+
+      ctx.beginPath();
+      ctx.arc(out / 2, out / 2, out / 2, 0, Math.PI * 2);
+      ctx.clip();
+
+      const scaleX    = cropNatImg.naturalWidth  / imgDisplayW;
+      const scaleY    = cropNatImg.naturalHeight / imgDisplayH;
+      const natCX     = cropX * scaleX;
+      const natCY     = cropY * scaleY;
+      const natR      = cropR * (scaleX + scaleY) / 2;
+
+      ctx.drawImage(cropNatImg, natCX - natR, natCY - natR, natR * 2, natR * 2, 0, 0, out, out);
+
+      set(ref(db, `board/tokens/${cropTokenId}/image`), canvas.toDataURL('image/jpeg', 0.85));
+      document.getElementById('crop-overlay').classList.remove('show');
+    });
+
+    document.getElementById('crop-cancel').addEventListener('click', () => {
+      document.getElementById('crop-overlay').classList.remove('show');
+    });
+
+    buildGrid();
+  </script>
+
+</body>
+</html>
