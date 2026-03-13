@@ -652,6 +652,152 @@
       touch-action: none;
     }
 
+    /* ── Draw toolbar ── */
+    .draw-toolbar {
+      display: none;
+      background: #0f0f22;
+      border-bottom: 1px solid #2a2a4a;
+      padding: 6px 16px;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .draw-toolbar.show { display: flex; }
+
+    .draw-tool {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #1e1e3a;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .draw-tool:hover { background: #2e2e5a; color: #fff; }
+    .draw-tool.active { background: #c0392b; border-color: #c0392b; color: #fff; }
+
+    .draw-sep {
+      width: 1px;
+      height: 22px;
+      background: #2a2a4a;
+      flex-shrink: 0;
+    }
+
+    .draw-color-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #1e1e3a;
+      cursor: pointer;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .draw-width-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: #666;
+    }
+    .draw-width-row input[type="range"] {
+      width: 70px;
+      accent-color: #c0392b;
+    }
+
+    .draw-zone-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    /* ── Zone overlays ── */
+    #zones-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .zone-overlay {
+      position: absolute;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .zone-overlay.selected {
+      outline: 2px solid rgba(255,255,255,0.8);
+      outline-offset: -1px;
+    }
+
+    .zone-label-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    /* ── SVG stroke layer ── */
+    #stroke-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 6;
+      overflow: visible;
+    }
+
+    /* ── Draw capture layer ── */
+    #draw-capture-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      cursor: crosshair;
+    }
+    #draw-capture-layer.mode-eraser { cursor: cell; }
+
+    /* Draw mode button active */
+    #draw-mode-btn.active {
+      background: #8b0000;
+      color: #fff;
+      border-color: #8b0000;
+    }
+
+    /* Zone label modal */
+    .zone-label-modal {
+      background: #12122a;
+      border: 1px solid #2a2a50;
+      border-radius: 12px;
+      padding: 20px 24px;
+      width: 280px;
+      max-width: calc(100vw - 32px);
+    }
+    .zone-label-modal h2 {
+      font-size: 1rem;
+      color: #c0392b;
+      margin-bottom: 16px;
+    }
+
   </style>
 </head>
 <body>
@@ -673,9 +819,36 @@
       <input  type="file" id="bg-upload"  accept="image/*">
       <input  type="file" id="img-upload" accept="image/*">
       <button class="btn-ghost" id="clear-map-btn">✕ Clear Map</button>
+      <button class="btn btn-dark" id="draw-mode-btn">✏ Draw</button>
       <button class="btn btn-red"  id="add-token-btn">+ Add Token</button>
     </div>
   </header>
+
+  <!-- Draw toolbar -->
+  <div class="draw-toolbar" id="draw-toolbar">
+    <button class="draw-tool active" id="tool-rect"   title="Rectangle Zone">▭</button>
+    <button class="draw-tool"        id="tool-pen"    title="Freehand Pen">✏</button>
+    <button class="draw-tool"        id="tool-eraser" title="Eraser">⌫</button>
+    <div class="draw-sep"></div>
+    <input type="color" class="draw-color-btn" id="draw-color" value="#e74c3c" title="Color">
+    <div class="draw-width-row">
+      <span>Width</span>
+      <input type="range" id="draw-width" min="2" max="16" value="4">
+    </div>
+    <div class="draw-sep"></div>
+    <button class="btn btn-dark" id="draw-undo" title="Undo last drawn item">↩ Undo</button>
+    <div class="draw-sep" id="zone-del-sep" style="display:none"></div>
+    <div class="draw-zone-info" id="zone-del-container" style="display:none">
+      <span id="zone-sel-label"></span>
+      <button class="del-btn" id="zone-del-btn" title="Hold to delete zone">
+        <svg class="del-ring" viewBox="0 0 24 24">
+          <circle class="ring-track" cx="12" cy="12" r="10"/>
+          <circle class="ring-fill"  cx="12" cy="12" r="10"/>
+        </svg>
+        <span class="del-icon">✕</span>
+      </button>
+    </div>
+  </div>
 
   <div class="layout">
 
@@ -694,6 +867,9 @@
           <div id="grid-bg"></div>
           <div id="grid">
             <!-- Cells are generated by the script below -->
+            <div id="zones-layer"></div>
+            <svg id="stroke-layer" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div id="draw-capture-layer"></div>
           </div>
         </div>
       </div>
@@ -736,6 +912,21 @@
       <div class="modal-footer">
         <button class="btn btn-dark" id="crop-cancel">Cancel</button>
         <button class="btn btn-red"  id="crop-confirm">Use this crop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone label modal -->
+  <div class="overlay" id="zone-modal">
+    <div class="zone-label-modal">
+      <h2>New Zone</h2>
+      <div class="field">
+        <label>Label (optional)</label>
+        <input type="text" id="zone-label-input" placeholder="e.g. Fireball" maxlength="20">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-dark" id="zone-cancel">Cancel</button>
+        <button class="btn btn-red"  id="zone-confirm">Add Zone</button>
       </div>
     </div>
   </div>
@@ -878,6 +1069,11 @@
       grid.style.gridTemplateColumns = `repeat(${cols}, ${cs}px)`;
       grid.style.gridTemplateRows    = `repeat(${rows}, ${cs}px)`;
 
+      // Preserve the drawing layers before clearing
+      const zonesLayer  = document.getElementById('zones-layer');
+      const strokeLayer = document.getElementById('stroke-layer');
+      const captLayer   = document.getElementById('draw-capture-layer');
+
       grid.innerHTML = '';
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -890,7 +1086,18 @@
         }
       }
 
+      // Re-append layers
+      grid.appendChild(zonesLayer);
+      grid.appendChild(strokeLayer);
+      grid.appendChild(captLayer);
+
+      // Update SVG dimensions to match grid
+      strokeLayer.setAttribute('width',  cols * cs + 'px');
+      strokeLayer.setAttribute('height', rows * cs + 'px');
+
       zoomLabel.textContent = ZOOM_STEPS[zoomIndex] + '%';
+      renderZones();
+      renderStrokes();
       renderTokens();
       resizeAndCenterMap();
     }
@@ -1048,6 +1255,7 @@
 
       el.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
+        if (drawMode) return; // drawing mode takes over
         e.preventDefault();
         e.stopPropagation();
 
@@ -1477,6 +1685,335 @@
 
     document.getElementById('crop-cancel').addEventListener('click', () => {
       document.getElementById('crop-overlay').classList.remove('show');
+    });
+
+    // ── Drawing Mode ──────────────────────────────────────────────
+    let drawMode   = false;
+    let activeTool = 'rect'; // 'rect' | 'pen' | 'eraser'
+    let zones      = {};
+    let drawStrokes = {};
+    let lastDrawnRef = null; // for undo
+
+    // Firebase listeners for zones and strokes
+    onValue(ref(db, 'board/zones'), (snap) => {
+      zones = snap.val() || {};
+      renderZones();
+    });
+    onValue(ref(db, 'board/strokes'), (snap) => {
+      drawStrokes = snap.val() || {};
+      renderStrokes();
+    });
+
+    // Toggle draw mode
+    document.getElementById('draw-mode-btn').addEventListener('click', () => {
+      drawMode = !drawMode;
+      document.getElementById('draw-mode-btn').classList.toggle('active', drawMode);
+      document.getElementById('draw-toolbar').classList.toggle('show', drawMode);
+      const captLayer = document.getElementById('draw-capture-layer');
+      captLayer.style.display = drawMode ? 'block' : 'none';
+      updateCaptureCursor();
+      if (!drawMode) { selectedZoneId = null; renderZones(); }
+    });
+
+    // Tool selection
+    ['tool-rect', 'tool-pen', 'tool-eraser'].forEach(btnId => {
+      document.getElementById(btnId).addEventListener('click', () => {
+        activeTool = btnId.replace('tool-', '');
+        document.querySelectorAll('.draw-tool').forEach(b => b.classList.remove('active'));
+        document.getElementById(btnId).classList.add('active');
+        updateCaptureCursor();
+      });
+    });
+
+    function updateCaptureCursor() {
+      const cap = document.getElementById('draw-capture-layer');
+      cap.classList.toggle('mode-eraser', activeTool === 'eraser');
+    }
+
+    // ── Zone rendering & selection ────────────────────────────────
+    let selectedZoneId = null;
+
+    function renderZones() {
+      const layer = document.getElementById('zones-layer');
+      layer.innerHTML = '';
+      const cs = cellSize();
+      Object.values(zones).forEach(z => {
+        const r1 = Math.min(z.row1, z.row2);
+        const c1 = Math.min(z.col1, z.col2);
+        const r2 = Math.max(z.row1, z.row2);
+        const c2 = Math.max(z.col1, z.col2);
+        const el = document.createElement('div');
+        el.className = 'zone-overlay';
+        if (z.id === selectedZoneId) el.classList.add('selected');
+        el.style.cssText = `top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;background:${z.color}44;border:2px solid ${z.color}bb;`;
+        if (z.label) {
+          const lbl = document.createElement('div');
+          lbl.className   = 'zone-label-text';
+          lbl.textContent = z.label;
+          el.appendChild(lbl);
+        }
+        layer.appendChild(el);
+      });
+      // Show/hide delete button in toolbar
+      const container = document.getElementById('zone-del-container');
+      const sep       = document.getElementById('zone-del-sep');
+      if (selectedZoneId && zones[selectedZoneId]) {
+        const z = zones[selectedZoneId];
+        document.getElementById('zone-sel-label').textContent = z.label ? `"${z.label}"` : 'Selected zone';
+        container.style.display = 'flex';
+        sep.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+        sep.style.display = 'none';
+      }
+    }
+
+    // Zone delete button (hold-to-delete)
+    {
+      const btn = document.getElementById('zone-del-btn');
+      let holdTimer = null;
+      btn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        btn.setPointerCapture(e.pointerId);
+        btn.classList.add('holding');
+        holdTimer = setTimeout(() => {
+          if (selectedZoneId) {
+            remove(ref(db, `board/zones/${selectedZoneId}`));
+            lastDrawnRef = null;
+            selectedZoneId = null;
+          }
+        }, 1000);
+      });
+      const cancel = () => { btn.classList.remove('holding'); clearTimeout(holdTimer); };
+      btn.addEventListener('pointerup',    cancel);
+      btn.addEventListener('pointerleave', cancel);
+    }
+
+    // ── Stroke rendering ──────────────────────────────────────────
+    function renderStrokes() {
+      const svg = document.getElementById('stroke-layer');
+      svg.querySelectorAll('path[data-id]').forEach(p => p.remove());
+      const cs = cellSize();
+      Object.values(drawStrokes).forEach(s => {
+        if (!s.pts || s.pts.length < 4) return;
+        const pathEl = makeSVGPath(s, cs);
+        pathEl.dataset.id = s.id;
+        svg.appendChild(pathEl);
+      });
+    }
+
+    function makeSVGPath(s, cs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      let d = `M ${s.pts[0]*cs} ${s.pts[1]*cs}`;
+      for (let i = 2; i < s.pts.length; i += 2) d += ` L ${s.pts[i]*cs} ${s.pts[i+1]*cs}`;
+      el.setAttribute('d', d);
+      el.setAttribute('stroke', s.color);
+      el.setAttribute('stroke-width', s.width * cs / BASE_CELL);
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke-linecap', 'round');
+      el.setAttribute('stroke-linejoin', 'round');
+      return el;
+    }
+
+    // ── Draw capture layer events ─────────────────────────────────
+    let zoneDrawing = false;
+    let zoneDraftR1, zoneDraftC1, zoneDraftR2, zoneDraftC2;
+    let zoneDraftEl = null;
+    let zoneDownX   = 0, zoneDownY = 0;
+
+    let penDrawing = false;
+    let penPts     = [];
+    let livePenEl  = null;
+
+    const captLayer = document.getElementById('draw-capture-layer');
+
+    function getCaptureCoords(e) {
+      const rect = grid.getBoundingClientRect();
+      const cs   = cellSize();
+      const cols = isPortrait ? 8 : 11;
+      const rows = isPortrait ? 11 : 8;
+      const fracCol = (e.clientX - rect.left) / cs;
+      const fracRow = (e.clientY - rect.top)  / cs;
+      const cellCol = Math.max(0, Math.min(cols - 1, Math.floor(fracCol)));
+      const cellRow = Math.max(0, Math.min(rows - 1, Math.floor(fracRow)));
+      return { fracCol, fracRow, cellCol, cellRow };
+    }
+
+    captLayer.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      captLayer.setPointerCapture(e.pointerId);
+      const { fracCol, fracRow, cellCol, cellRow } = getCaptureCoords(e);
+
+      if (activeTool === 'rect') {
+        zoneDownX = e.clientX; zoneDownY = e.clientY;
+        zoneDraftR1 = zoneDraftR2 = cellRow;
+        zoneDraftC1 = zoneDraftC2 = cellCol;
+        zoneDrawing = true;
+        showZoneDraft();
+      } else if (activeTool === 'pen') {
+        penDrawing = true;
+        penPts = [fracCol, fracRow];
+        const cs = cellSize();
+        livePenEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        livePenEl.setAttribute('stroke', document.getElementById('draw-color').value);
+        livePenEl.setAttribute('stroke-width', parseInt(document.getElementById('draw-width').value) * cs / BASE_CELL);
+        livePenEl.setAttribute('fill', 'none');
+        livePenEl.setAttribute('stroke-linecap', 'round');
+        livePenEl.setAttribute('stroke-linejoin', 'round');
+        document.getElementById('stroke-layer').appendChild(livePenEl);
+        updateLivePen();
+      } else if (activeTool === 'eraser') {
+        eraseAt(fracCol, fracRow);
+      }
+    });
+
+    captLayer.addEventListener('pointermove', (e) => {
+      if (!e.buttons) return;
+      const { fracCol, fracRow, cellCol, cellRow } = getCaptureCoords(e);
+      const cols = isPortrait ? 8 : 11;
+      const rows = isPortrait ? 11 : 8;
+
+      if (activeTool === 'rect' && zoneDrawing) {
+        zoneDraftR2 = Math.max(0, Math.min(rows - 1, cellRow));
+        zoneDraftC2 = Math.max(0, Math.min(cols - 1, cellCol));
+        showZoneDraft();
+      } else if (activeTool === 'pen' && penDrawing) {
+        // Only add point if moved enough (avoid huge arrays)
+        const cs      = cellSize();
+        const minDist = 4 / cs;
+        const lx = penPts[penPts.length - 2], ly = penPts[penPts.length - 1];
+        if ((fracCol-lx)**2 + (fracRow-ly)**2 > minDist**2) {
+          penPts.push(fracCol, fracRow);
+          updateLivePen();
+        }
+      } else if (activeTool === 'eraser') {
+        eraseAt(fracCol, fracRow);
+      }
+    });
+
+    captLayer.addEventListener('pointerup', (e) => {
+      const { fracCol, fracRow, cellCol, cellRow } = getCaptureCoords(e);
+
+      if (activeTool === 'rect' && zoneDrawing) {
+        zoneDrawing = false;
+        clearZoneDraft();
+        // Distinguish click vs drag
+        const moved = Math.abs(e.clientX - zoneDownX) + Math.abs(e.clientY - zoneDownY) > 5;
+        if (!moved) {
+          // Click — select/deselect zone containing this cell
+          selectZoneAt(cellCol, cellRow);
+        } else {
+          // Drag — open label modal to create zone
+          document.getElementById('zone-label-input').value = '';
+          document.getElementById('zone-modal').classList.add('show');
+          document.getElementById('zone-label-input').focus();
+        }
+      } else if (activeTool === 'pen' && penDrawing) {
+        penDrawing = false;
+        if (livePenEl) { livePenEl.remove(); livePenEl = null; }
+        if (penPts.length >= 4) {
+          const id = 's_' + Date.now();
+          const data = {
+            id,
+            color: document.getElementById('draw-color').value,
+            width: parseInt(document.getElementById('draw-width').value),
+            pts:   penPts
+          };
+          set(ref(db, `board/strokes/${id}`), data);
+          lastDrawnRef = `board/strokes/${id}`;
+        }
+        penPts = [];
+      }
+    });
+
+    function showZoneDraft() {
+      if (!zoneDraftEl) {
+        zoneDraftEl = document.createElement('div');
+        document.getElementById('zones-layer').appendChild(zoneDraftEl);
+      }
+      const cs    = cellSize();
+      const color = document.getElementById('draw-color').value;
+      const r1 = Math.min(zoneDraftR1, zoneDraftR2), r2 = Math.max(zoneDraftR1, zoneDraftR2);
+      const c1 = Math.min(zoneDraftC1, zoneDraftC2), c2 = Math.max(zoneDraftC1, zoneDraftC2);
+      zoneDraftEl.style.cssText = `position:absolute;top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;background:${color}33;border:2px dashed ${color}cc;border-radius:2px;pointer-events:none;z-index:8;`;
+    }
+
+    function clearZoneDraft() {
+      if (zoneDraftEl) { zoneDraftEl.remove(); zoneDraftEl = null; }
+    }
+
+    function updateLivePen() {
+      if (!livePenEl || penPts.length < 2) return;
+      const cs = cellSize();
+      let d = `M ${penPts[0]*cs} ${penPts[1]*cs}`;
+      for (let i = 2; i < penPts.length; i += 2) d += ` L ${penPts[i]*cs} ${penPts[i+1]*cs}`;
+      livePenEl.setAttribute('d', d);
+      livePenEl.setAttribute('stroke-width', parseInt(document.getElementById('draw-width').value) * cs / BASE_CELL);
+    }
+
+    function eraseAt(fracCol, fracRow) {
+      const cs          = cellSize();
+      const eraseRadius = 20 / cs; // 20px in cell units
+      for (const [id, s] of Object.entries(drawStrokes)) {
+        if (!s.pts) continue;
+        for (let i = 0; i < s.pts.length; i += 2) {
+          const dx = s.pts[i] - fracCol, dy = s.pts[i+1] - fracRow;
+          if (dx*dx + dy*dy < eraseRadius*eraseRadius) {
+            remove(ref(db, `board/strokes/${id}`));
+            break;
+          }
+        }
+      }
+    }
+
+    function selectZoneAt(col, row) {
+      let found = null;
+      for (const z of Object.values(zones)) {
+        const r1 = Math.min(z.row1, z.row2), r2 = Math.max(z.row1, z.row2);
+        const c1 = Math.min(z.col1, z.col2), c2 = Math.max(z.col1, z.col2);
+        if (row >= r1 && row <= r2 && col >= c1 && col <= c2) { found = z.id; break; }
+      }
+      selectedZoneId = (found === selectedZoneId) ? null : found;
+      renderZones();
+    }
+
+    // Zone label modal confirm / cancel
+    document.getElementById('zone-confirm').addEventListener('click', () => {
+      const label = document.getElementById('zone-label-input').value.trim();
+      const id    = 'z_' + Date.now();
+      const data  = {
+        id,
+        row1:  Math.min(zoneDraftR1, zoneDraftR2),
+        col1:  Math.min(zoneDraftC1, zoneDraftC2),
+        row2:  Math.max(zoneDraftR1, zoneDraftR2),
+        col2:  Math.max(zoneDraftC1, zoneDraftC2),
+        color: document.getElementById('draw-color').value,
+        label: label
+      };
+      set(ref(db, `board/zones/${id}`), data);
+      lastDrawnRef = `board/zones/${id}`;
+      document.getElementById('zone-modal').classList.remove('show');
+    });
+
+    document.getElementById('zone-cancel').addEventListener('click', () => {
+      document.getElementById('zone-modal').classList.remove('show');
+    });
+
+    document.getElementById('zone-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('zone-modal'))
+        document.getElementById('zone-modal').classList.remove('show');
+    });
+
+    document.getElementById('zone-label-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('zone-confirm').click();
+    });
+
+    // Undo last drawn item
+    document.getElementById('draw-undo').addEventListener('click', () => {
+      if (!lastDrawnRef) return;
+      remove(ref(db, lastDrawnRef));
+      lastDrawnRef = null;
     });
 
     buildGrid();
