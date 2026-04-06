@@ -732,28 +732,28 @@
     .zone-overlay {
       position: absolute;
       border-radius: 2px;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: default;
     }
     .zone-overlay.selected {
       outline: 2px solid rgba(255,255,255,0.8);
       outline-offset: -1px;
     }
 
-    .zone-label-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: rgba(255,255,255,0.92);
-      text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+    /* Floating tooltip for zones and strokes */
+    #stroke-tooltip {
+      position: fixed;
+      background: rgba(0,0,0,0.88);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 5px;
       pointer-events: none;
+      z-index: 200;
       white-space: nowrap;
-      max-width: 90%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: center;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: none;
     }
 
     /* ── SVG stroke layer ── */
@@ -782,6 +782,184 @@
       color: #fff;
       border-color: #8b0000;
     }
+
+    /* ── Map themes ── */
+
+    /* Cobblestone */
+    #grid.theme-cobblestone { border-color: #1a1410; }
+    .theme-cobblestone .cell       { border-color: #181410; background: url('./tiles/Cobble 1.jpg') center/cover no-repeat; }
+    .theme-cobblestone .cell.shade { border-color: #181410; background: url('./tiles/Cobble 2.jpg') center/cover no-repeat; }
+    /* Forest */
+    #grid.theme-forest { border-color: #1a1a0a; }
+    .theme-forest .cell       { border-color: #141208; background: url('./tiles/Grass tile 1.png') center/cover no-repeat; }
+    .theme-forest .cell.shade { border-color: #141208; background: url('./tiles/Grass tile 2.png') center/cover no-repeat; }
+    /* Desert */
+    #grid.theme-desert { border-color: #7a5a20; }
+    .theme-desert .cell       { border-color: #8a6828; background: url('./tiles/Sand 1.jpg') center/cover no-repeat; }
+    .theme-desert .cell.shade { border-color: #8a6828; background: url('./tiles/Sand 2.jpg') center/cover no-repeat; }
+    /* Water */
+    #grid.theme-water { border-color: #0a1a2a; }
+    .theme-water .cell       { border-color: #0a1428; background: url('./tiles/Water 1.jpg') center/cover no-repeat; }
+    .theme-water .cell.shade { border-color: #0a1428; background: url('./tiles/Water 2.jpg') center/cover no-repeat; }
+    /* Volcanic */
+    #grid.theme-volcanic { border-color: #2a0a00; }
+    .theme-volcanic .cell       { border-color: #1a0800; background: url('./tiles/Volcanic 1.jpg') center/cover no-repeat; }
+    .theme-volcanic .cell.shade { border-color: #1a0800; background: url('./tiles/Volcanic 2.jpg') center/cover no-repeat; }
+
+    /* Keep drag-over highlight working on top of any theme */
+    .cell.drag-over {
+      background: rgba(192, 57, 43, 0.35) !important;
+      border-color: rgba(192, 57, 43, 0.8) !important;
+      box-shadow: none !important;
+    }
+
+    /* Theme selector */
+    #theme-select {
+      background: #1e1e3a;
+      color: #ccc;
+      border: 1px solid #333;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0 8px;
+      height: 32px;
+      outline: none;
+    }
+    #theme-select:hover { filter: brightness(1.2); }
+
+    /* ── Map Editor modal ── */
+    .map-editor-modal {
+      background: #12122a;
+      border: 1px solid #2a2a50;
+      border-radius: 12px;
+      padding: 24px;
+      width: 520px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .map-editor-modal h2 {
+      font-size: 1rem;
+      color: #c0392b;
+      margin-bottom: 18px;
+    }
+    .editor-dims {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .editor-dims label { font-size: 0.78rem; color: #999; }
+    .editor-dims input[type="number"] {
+      width: 60px;
+      background: #1a1a30;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      color: #eee;
+      padding: 6px 8px;
+      font-size: 0.88rem;
+      outline: none;
+      text-align: center;
+    }
+    .editor-dims input[type="number"]:focus { border-color: #c0392b; }
+    .editor-dims span { color: #555; font-size: 1rem; }
+    .editor-hint {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .editor-grid-wrap {
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      user-select: none;
+    }
+    .editor-grid {
+      display: grid;
+      width: 100%;
+    }
+    .editor-cell {
+      aspect-ratio: 1;
+      background: #2a3a28;
+      border: 1px solid #1a1a2a;
+      cursor: pointer;
+      transition: background 0.08s;
+    }
+    .editor-cell.void            { background: #080810; }
+    .editor-cell.tile-default      { background: #1a1a2e; }
+    .editor-cell.tile-cobblestone  { background: #6a5a4a; }
+    .editor-cell.tile-forest       { background: #7a9a52; }
+    .editor-cell.tile-desert       { background: #d4b870; }
+    .editor-cell.tile-water        { background: #1a3a5a; }
+    .editor-cell.tile-volcanic     { background: #3a1200; }
+    /* Main grid void cells */
+    .cell.cell-void {
+      background: #000 !important;
+      border-color: #111 !important;
+      box-shadow: none !important;
+    }
+    /* Per-cell tile overrides — override board theme */
+    #grid .cell.tile-default       { background: #1a1a2e; border-color: rgba(120,120,180,0.3); box-shadow: none; }
+    #grid .cell.tile-default.shade { background: #14142a; }
+    #grid .cell.tile-cobblestone       { border-color: #181410; background: url('./tiles/Cobble 1.jpg') center/cover no-repeat; }
+    #grid .cell.tile-cobblestone.shade { border-color: #181410; background: url('./tiles/Cobble 2.jpg') center/cover no-repeat; }
+    #grid .cell.tile-forest            { border-color: #141208; background: url('./tiles/Grass tile 1.png') center/cover no-repeat; }
+    #grid .cell.tile-forest.shade      { border-color: #141208; background: url('./tiles/Grass tile 2.png') center/cover no-repeat; }
+    #grid .cell.tile-desert            { border-color: #8a6828; background: url('./tiles/Sand 1.jpg') center/cover no-repeat; }
+    #grid .cell.tile-desert.shade      { border-color: #8a6828; background: url('./tiles/Sand 2.jpg') center/cover no-repeat; }
+    #grid .cell.tile-water             { border-color: #0a1428; background: url('./tiles/Water 1.jpg') center/cover no-repeat; }
+    #grid .cell.tile-water.shade       { border-color: #0a1428; background: url('./tiles/Water 2.jpg') center/cover no-repeat; }
+    #grid .cell.tile-volcanic          { border-color: #1a0800; background: url('./tiles/Volcanic 1.jpg') center/cover no-repeat; }
+    #grid .cell.tile-volcanic.shade    { border-color: #1a0800; background: url('./tiles/Volcanic 2.jpg') center/cover no-repeat; }
+    /* Mode toggle */
+    .editor-mode-toggle {
+      display: flex;
+      margin-bottom: 16px;
+      border: 1px solid #2a2a50;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1;
+      background: #1a1a30;
+      border: none;
+      color: #888;
+      padding: 7px 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn:hover  { background: #22223a; color: #bbb; }
+    .mode-btn.active { background: #c0392b; color: #fff; }
+    /* Tile palette */
+    .tile-palette {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .palette-swatch {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.12s;
+      user-select: none;
+    }
+    .palette-swatch.selected        { border-color: #fff; }
+    .palette-swatch[data-tile="void"]    { background: #080810; color: #888; }
+    .palette-swatch[data-tile="erase"]   { background: #1a1a30; color: #666; border: 2px dashed #444; }
+    .palette-swatch[data-tile="erase"].selected { border-color: #888; }
+    .palette-swatch[data-tile="default"]      { background: #1a1a2e; color: #aaa; }
+    .palette-swatch[data-tile="cobblestone"]  { background: #6a5a4a; color: #ddd; }
+    .palette-swatch[data-tile="forest"]       { background: #7a9a52; color: #111; }
+    .palette-swatch[data-tile="desert"]       { background: #d4b870; color: #111; }
+    .palette-swatch[data-tile="water"]        { background: #1a3a5a; color: #aaa; }
+    .palette-swatch[data-tile="volcanic"]     { background: #3a1200; color: #aaa; }
 
     /* Zone label modal */
     .zone-label-modal {
@@ -819,6 +997,15 @@
       <input  type="file" id="bg-upload"  accept="image/*">
       <input  type="file" id="img-upload" accept="image/*">
       <button class="btn-ghost" id="clear-map-btn">✕ Clear Map</button>
+      <select id="theme-select" title="Map theme">
+        <option value="default">⬛ Default</option>
+        <option value="cobblestone">🪨 Cobblestone</option>
+        <option value="forest">🌿 Forest</option>
+        <option value="desert">🏜️ Desert</option>
+        <option value="water">💧 Water</option>
+        <option value="volcanic">🌋 Volcanic</option>
+      </select>
+      <button class="btn btn-dark" id="map-editor-btn">🗺 Map Editor</button>
       <button class="btn btn-dark" id="draw-mode-btn">✏ Draw</button>
       <button class="btn btn-red"  id="add-token-btn">+ Add Token</button>
     </div>
@@ -916,17 +1103,17 @@
     </div>
   </div>
 
-  <!-- Zone label modal -->
+  <!-- Zone / stroke label modal -->
   <div class="overlay" id="zone-modal">
     <div class="zone-label-modal">
-      <h2>New Zone</h2>
+      <h2 id="zone-modal-title">New Zone</h2>
       <div class="field">
         <label>Label (optional)</label>
         <input type="text" id="zone-label-input" placeholder="e.g. Fireball" maxlength="20">
       </div>
       <div class="modal-footer">
         <button class="btn btn-dark" id="zone-cancel">Cancel</button>
-        <button class="btn btn-red"  id="zone-confirm">Add Zone</button>
+        <button class="btn btn-red"  id="zone-confirm">Add</button>
       </div>
     </div>
   </div>
@@ -958,6 +1145,8 @@
       </div>
     </div>
   </div>
+
+  <div id="stroke-tooltip"></div>
 
   <script type="module">
     import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1017,7 +1206,6 @@
     document.getElementById('bg-upload').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      // Grid pixel size at 100% zoom: 8*70=560 wide, 11*70=770 tall
       // Store at 2× for sharp display on high-DPI screens
       const dataUrl = await compressImage(file, 1120, 1540);
       set(ref(db, 'board/background'), dataUrl);
@@ -1041,10 +1229,40 @@
       }
     });
 
+    // Listen for grid dimension changes — fired on ALL connected clients
+    onValue(ref(db, 'board/cols'), (snap) => {
+      if (snap.val() !== null) GRID_COLS = snap.val();
+      buildGrid();
+    });
+    onValue(ref(db, 'board/rows'), (snap) => {
+      if (snap.val() !== null) GRID_ROWS = snap.val();
+      buildGrid();
+    });
+
     // Listen for orientation changes — fired on ALL connected clients
     onValue(ref(db, 'board/orientation'), (snap) => {
       if (snap.val() !== null) isPortrait = snap.val();
       buildGrid();
+    });
+
+    // ── Map theme ────────────────────────────────────────────────
+    let boardTheme = 'default';
+
+    function applyTheme(theme) {
+      boardTheme = theme;
+      const themeClasses = { cobblestone: 'theme-cobblestone', forest: 'theme-forest', desert: 'theme-desert', water: 'theme-water', volcanic: 'theme-volcanic' };
+      const bgColors     = { cobblestone: '#0e0c0a', forest: '#080e04', desert: '#3a2808', water: '#02080e', volcanic: '#100400' };
+      grid.className = themeClasses[theme] || '';
+      document.getElementById('grid-bg').style.backgroundColor = bgColors[theme] || '#1a1a2e';
+    }
+
+    onValue(ref(db, 'board/theme'), (snap) => {
+      applyTheme(snap.val() || 'default');
+      document.getElementById('theme-select').value = boardTheme;
+    });
+
+    document.getElementById('theme-select').addEventListener('change', (e) => {
+      set(ref(db, 'board/theme'), e.target.value);
     });
 
     // ── Grid & UI ───────────────────────────────────────────────
@@ -1061,13 +1279,35 @@
       return Math.round(BASE_CELL * ZOOM_STEPS[zoomIndex] / 100);
     }
 
-    function buildGrid() {
-      const cols = isPortrait ? 8  : 11;
-      const rows = isPortrait ? 11 : 8;
-      const cs   = cellSize();
+    // ── Coordinate helpers (variable grid size, synced from Firebase) ────────────
+    let GRID_COLS = 8, GRID_ROWS = 11;
+    let boardCells = {};   // { "r_c": true } for void cells; absence = active
 
-      grid.style.gridTemplateColumns = `repeat(${cols}, ${cs}px)`;
-      grid.style.gridTemplateRows    = `repeat(${rows}, ${cs}px)`;
+    // Convert logical (col, row) → pixel (left, top) of cell top-left
+    function cellPixel(col, row) {
+      const cs = cellSize();
+      if (isPortrait) return { left: col * cs, top: row * cs };
+      return { left: (GRID_ROWS - 1 - row) * cs, top: col * cs };
+    }
+
+    // Convert grid-relative screen (x, y) → logical fractional (fracCol, fracRow)
+    function screenToFrac(x, y) {
+      const cs = cellSize();
+      if (isPortrait) return { fracCol: x / cs, fracRow: y / cs };
+      return { fracCol: y / cs, fracRow: GRID_ROWS - x / cs };
+    }
+
+    function buildGrid() {
+      const cs    = cellSize();
+      const gridW = isPortrait ? GRID_COLS * cs : GRID_ROWS * cs;
+      const gridH = isPortrait ? GRID_ROWS * cs : GRID_COLS * cs;
+
+      // Switch from CSS grid to absolute positioning
+      grid.style.gridTemplateColumns = '';
+      grid.style.gridTemplateRows    = '';
+      grid.style.display = 'block';
+      grid.style.width   = gridW + 'px';
+      grid.style.height  = gridH + 'px';
 
       // Preserve the drawing layers before clearing
       const zonesLayer  = document.getElementById('zones-layer');
@@ -1075,13 +1315,21 @@
       const captLayer   = document.getElementById('draw-capture-layer');
 
       grid.innerHTML = '';
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
+      // Always iterate row-major in logical space: children[row*GRID_COLS+col] = cell(col,row)
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const { left, top } = cellPixel(c, r);
           const cell = document.createElement('div');
           cell.className = 'cell';
-          cell.style.width  = cs + 'px';
-          cell.style.height = cs + 'px';
+          cell.style.position = 'absolute';
+          cell.style.width    = cs + 'px';
+          cell.style.height   = cs + 'px';
+          cell.style.left     = left + 'px';
+          cell.style.top      = top  + 'px';
           if ((r + c) % 2 === 0) cell.classList.add('shade');
+          const tileType = boardCells[r + '_' + c];
+          if (tileType === 'void' || tileType === true) cell.classList.add('cell-void');
+          else if (tileType) cell.classList.add('tile-' + tileType);
           grid.appendChild(cell);
         }
       }
@@ -1091,9 +1339,9 @@
       grid.appendChild(strokeLayer);
       grid.appendChild(captLayer);
 
-      // Update SVG dimensions to match grid
-      strokeLayer.setAttribute('width',  cols * cs + 'px');
-      strokeLayer.setAttribute('height', rows * cs + 'px');
+      // Update SVG dimensions to match grid visual size
+      strokeLayer.setAttribute('width',  gridW + 'px');
+      strokeLayer.setAttribute('height', gridH + 'px');
 
       zoomLabel.textContent = ZOOM_STEPS[zoomIndex] + '%';
       renderZones();
@@ -1114,22 +1362,9 @@
     document.getElementById('zoom-out').addEventListener('click', zoomOut);
 
     document.getElementById('rotate-btn').addEventListener('click', () => {
-      const newPortrait = !isPortrait;
-      const newCols     = newPortrait ? 8  : 11;
-      const newRows     = newPortrait ? 11 : 8;
-
-      // Build a single Firebase update: orientation + any out-of-bounds tokens
-      const changes = { 'board/orientation': newPortrait };
-
-      Object.values(tokens).forEach(t => {
-        const sq     = sizeToSquares(t.size);
-        const newRow = Math.min(t.row, newRows - sq);
-        const newCol = Math.min(t.col, newCols - sq);
-        if (newRow !== t.row) changes[`board/tokens/${t.id}/row`] = newRow;
-        if (newCol !== t.col) changes[`board/tokens/${t.id}/col`] = newCol;
-      });
-
-      update(ref(db), changes); // one atomic write — triggers listeners on all clients
+      // Rotating is a pure display change — no coordinates are moved or deleted.
+      // The grid dimensions come from Firebase (board/cols × board/rows); landscape just renders it 90° clockwise.
+      set(ref(db, 'board/orientation'), !isPortrait);
     });
 
     // Ctrl + scroll wheel to zoom
@@ -1143,8 +1378,8 @@
     function resizeAndCenterMap() {
       const mapArea = document.querySelector('.map-area');
       const inner   = document.querySelector('.map-inner');
-      const cols    = isPortrait ? 8  : 11;
-      const rows    = isPortrait ? 11 : 8;
+      const cols    = isPortrait ? GRID_COLS : GRID_ROWS;
+      const rows    = isPortrait ? GRID_ROWS : GRID_COLS;
       const cs      = cellSize();
       const gridW   = cols * cs + 4;   // +4 for the 2px border each side
       const gridH   = rows * cs + 4;
@@ -1188,12 +1423,17 @@
       if (sq === 1) {
         const ts     = Math.max(20, Math.round(cs * 0.76));
         const offset = Math.round((cs - ts) / 2);
-        return { ts, top: row * cs + offset, left: col * cs + offset };
+        const { left, top } = cellPixel(col, row);
+        return { ts, top: top + offset, left: left + offset };
       }
       // Multi-square: fill the squares with a small inset so grid lines show
       const inset = 4;
       const ts    = sq * cs - inset;
-      return { ts, top: row * cs + inset / 2, left: col * cs + inset / 2 };
+      if (isPortrait) {
+        return { ts, top: row * cs + inset / 2, left: col * cs + inset / 2 };
+      }
+      // Landscape: token spans rows row..row+sq-1; left edge is the cell with largest row
+      return { ts, top: col * cs + inset / 2, left: (GRID_ROWS - row - sq) * cs + inset / 2 };
     }
 
     let draggingId = null;
@@ -1314,17 +1554,11 @@
     // Work out which cell the pointer is over, clamped to grid bounds
     function snapToCell(clientX, clientY, size) {
       const rect = grid.getBoundingClientRect();
-      const cs   = cellSize();
-      const cols = isPortrait ? 8  : 11;
-      const rows = isPortrait ? 11 : 8;
       const sq   = sizeToSquares(size);
+      const { fracCol, fracRow } = screenToFrac(clientX - rect.left, clientY - rect.top);
 
-      let col = Math.floor((clientX - rect.left) / cs);
-      let row = Math.floor((clientY - rect.top)  / cs);
-
-      // Clamp so token stays fully inside the grid
-      col = Math.max(0, Math.min(cols - sq, col));
-      row = Math.max(0, Math.min(rows - sq, row));
+      let col = Math.max(0, Math.min(GRID_COLS - sq, Math.floor(fracCol)));
+      let row = Math.max(0, Math.min(GRID_ROWS - sq, Math.floor(fracRow)));
 
       return { row, col };
     }
@@ -1332,12 +1566,12 @@
     function highlightCells(clientX, clientY, size) {
       clearHighlight();
       const { row, col } = snapToCell(clientX, clientY, size);
-      const sq   = sizeToSquares(size);
-      const cols = isPortrait ? 8 : 11;
+      const sq = sizeToSquares(size);
 
       for (let r = row; r < row + sq; r++) {
         for (let c = col; c < col + sq; c++) {
-          const cellEl = grid.children[r * cols + c];
+          // Children always stored in logical row-major order with GRID_COLS cols per row
+          const cellEl = grid.children[r * GRID_COLS + c];
           if (cellEl?.classList.contains('cell')) cellEl.classList.add('drag-over');
         }
       }
@@ -1387,6 +1621,7 @@
 
         let holdTimer = null;
         del.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
           e.stopPropagation();
           del.setPointerCapture(e.pointerId);
           del.classList.add('holding');
@@ -1398,8 +1633,8 @@
           del.classList.remove('holding');
           clearTimeout(holdTimer);
         };
-        del.addEventListener('pointerup',    cancelHold);
-        del.addEventListener('pointerleave', cancelHold);
+        del.addEventListener('pointerup',     cancelHold);
+        del.addEventListener('pointercancel', cancelHold);
 
         const editBtn = document.createElement('button');
         editBtn.className   = 'edit-btn';
@@ -1692,7 +1927,9 @@
     let activeTool = 'rect'; // 'rect' | 'pen' | 'eraser'
     let zones      = {};
     let drawStrokes = {};
-    let lastDrawnRef = null; // for undo
+    let lastDrawnRef  = null; // for undo
+    let labelModalMode = 'zone'; // 'zone' | 'stroke'
+    let penTempData    = null;
 
     // Firebase listeners for zones and strokes
     onValue(ref(db, 'board/zones'), (snap) => {
@@ -1745,13 +1982,13 @@
         const el = document.createElement('div');
         el.className = 'zone-overlay';
         if (z.id === selectedZoneId) el.classList.add('selected');
-        el.style.cssText = `top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;background:${z.color}44;border:2px solid ${z.color}bb;`;
-        if (z.label) {
-          const lbl = document.createElement('div');
-          lbl.className   = 'zone-label-text';
-          lbl.textContent = z.label;
-          el.appendChild(lbl);
+        let pos;
+        if (isPortrait) {
+          pos = `top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;`;
+        } else {
+          pos = `top:${c1*cs}px;left:${(10-r2)*cs}px;width:${(r2-r1+1)*cs}px;height:${(c2-c1+1)*cs}px;`;
         }
+        el.style.cssText = pos + `background:${z.color}44;border:2px solid ${z.color}bb;`;
         layer.appendChild(el);
       });
       // Show/hide delete button in toolbar
@@ -1773,6 +2010,7 @@
       const btn = document.getElementById('zone-del-btn');
       let holdTimer = null;
       btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         btn.setPointerCapture(e.pointerId);
         btn.classList.add('holding');
@@ -1785,8 +2023,8 @@
         }, 1000);
       });
       const cancel = () => { btn.classList.remove('holding'); clearTimeout(holdTimer); };
-      btn.addEventListener('pointerup',    cancel);
-      btn.addEventListener('pointerleave', cancel);
+      btn.addEventListener('pointerup',     cancel);
+      btn.addEventListener('pointercancel', cancel);
     }
 
     // ── Stroke rendering ──────────────────────────────────────────
@@ -1802,11 +2040,18 @@
       });
     }
 
+    function ptsToSVGd(pts, cs) {
+      // pts = [col, row, col, row, ...] in logical cell coords
+      const px = (col, row) => isPortrait ? col * cs : (GRID_ROWS - row) * cs;
+      const py = (col, row) => isPortrait ? row * cs : col * cs;
+      let d = `M ${px(pts[0], pts[1])} ${py(pts[0], pts[1])}`;
+      for (let i = 2; i < pts.length; i += 2) d += ` L ${px(pts[i], pts[i+1])} ${py(pts[i], pts[i+1])}`;
+      return d;
+    }
+
     function makeSVGPath(s, cs) {
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      let d = `M ${s.pts[0]*cs} ${s.pts[1]*cs}`;
-      for (let i = 2; i < s.pts.length; i += 2) d += ` L ${s.pts[i]*cs} ${s.pts[i+1]*cs}`;
-      el.setAttribute('d', d);
+      el.setAttribute('d', ptsToSVGd(s.pts, cs));
       el.setAttribute('stroke', s.color);
       el.setAttribute('stroke-width', s.width * cs / BASE_CELL);
       el.setAttribute('fill', 'none');
@@ -1829,13 +2074,9 @@
 
     function getCaptureCoords(e) {
       const rect = grid.getBoundingClientRect();
-      const cs   = cellSize();
-      const cols = isPortrait ? 8 : 11;
-      const rows = isPortrait ? 11 : 8;
-      const fracCol = (e.clientX - rect.left) / cs;
-      const fracRow = (e.clientY - rect.top)  / cs;
-      const cellCol = Math.max(0, Math.min(cols - 1, Math.floor(fracCol)));
-      const cellRow = Math.max(0, Math.min(rows - 1, Math.floor(fracRow)));
+      const { fracCol, fracRow } = screenToFrac(e.clientX - rect.left, e.clientY - rect.top);
+      const cellCol = Math.max(0, Math.min(GRID_COLS - 1, Math.floor(fracCol)));
+      const cellRow = Math.max(0, Math.min(GRID_ROWS - 1, Math.floor(fracRow)));
       return { fracCol, fracRow, cellCol, cellRow };
     }
 
@@ -1871,12 +2112,10 @@
     captLayer.addEventListener('pointermove', (e) => {
       if (!e.buttons) return;
       const { fracCol, fracRow, cellCol, cellRow } = getCaptureCoords(e);
-      const cols = isPortrait ? 8 : 11;
-      const rows = isPortrait ? 11 : 8;
 
       if (activeTool === 'rect' && zoneDrawing) {
-        zoneDraftR2 = Math.max(0, Math.min(rows - 1, cellRow));
-        zoneDraftC2 = Math.max(0, Math.min(cols - 1, cellCol));
+        zoneDraftR2 = Math.max(0, Math.min(GRID_ROWS - 1, cellRow));
+        zoneDraftC2 = Math.max(0, Math.min(GRID_COLS - 1, cellCol));
         showZoneDraft();
       } else if (activeTool === 'pen' && penDrawing) {
         // Only add point if moved enough (avoid huge arrays)
@@ -1913,15 +2152,17 @@
         penDrawing = false;
         if (livePenEl) { livePenEl.remove(); livePenEl = null; }
         if (penPts.length >= 4) {
-          const id = 's_' + Date.now();
-          const data = {
-            id,
+          penTempData = {
+            id:    's_' + Date.now(),
             color: document.getElementById('draw-color').value,
             width: parseInt(document.getElementById('draw-width').value),
-            pts:   penPts
+            pts:   penPts.slice()
           };
-          set(ref(db, `board/strokes/${id}`), data);
-          lastDrawnRef = `board/strokes/${id}`;
+          labelModalMode = 'stroke';
+          document.getElementById('zone-modal-title').textContent = 'New Stroke';
+          document.getElementById('zone-label-input').value = '';
+          document.getElementById('zone-modal').classList.add('show');
+          document.getElementById('zone-label-input').focus();
         }
         penPts = [];
       }
@@ -1936,7 +2177,13 @@
       const color = document.getElementById('draw-color').value;
       const r1 = Math.min(zoneDraftR1, zoneDraftR2), r2 = Math.max(zoneDraftR1, zoneDraftR2);
       const c1 = Math.min(zoneDraftC1, zoneDraftC2), c2 = Math.max(zoneDraftC1, zoneDraftC2);
-      zoneDraftEl.style.cssText = `position:absolute;top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;background:${color}33;border:2px dashed ${color}cc;border-radius:2px;pointer-events:none;z-index:8;`;
+      let draftPos;
+      if (isPortrait) {
+        draftPos = `top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;`;
+      } else {
+        draftPos = `top:${c1*cs}px;left:${(10-r2)*cs}px;width:${(r2-r1+1)*cs}px;height:${(c2-c1+1)*cs}px;`;
+      }
+      zoneDraftEl.style.cssText = `position:absolute;${draftPos}background:${color}33;border:2px dashed ${color}cc;border-radius:2px;pointer-events:none;z-index:8;`;
     }
 
     function clearZoneDraft() {
@@ -1946,15 +2193,15 @@
     function updateLivePen() {
       if (!livePenEl || penPts.length < 2) return;
       const cs = cellSize();
-      let d = `M ${penPts[0]*cs} ${penPts[1]*cs}`;
-      for (let i = 2; i < penPts.length; i += 2) d += ` L ${penPts[i]*cs} ${penPts[i+1]*cs}`;
-      livePenEl.setAttribute('d', d);
+      livePenEl.setAttribute('d', ptsToSVGd(penPts, cs));
       livePenEl.setAttribute('stroke-width', parseInt(document.getElementById('draw-width').value) * cs / BASE_CELL);
     }
 
     function eraseAt(fracCol, fracRow) {
       const cs          = cellSize();
       const eraseRadius = 20 / cs; // 20px in cell units
+
+      // Erase strokes
       for (const [id, s] of Object.entries(drawStrokes)) {
         if (!s.pts) continue;
         for (let i = 0; i < s.pts.length; i += 2) {
@@ -1963,6 +2210,16 @@
             remove(ref(db, `board/strokes/${id}`));
             break;
           }
+        }
+      }
+
+      // Erase zones
+      for (const [id, z] of Object.entries(zones)) {
+        const r1 = Math.min(z.row1, z.row2), r2 = Math.max(z.row1, z.row2);
+        const c1 = Math.min(z.col1, z.col2), c2 = Math.max(z.col1, z.col2);
+        if (fracRow >= r1 && fracRow <= r2 + 1 && fracCol >= c1 && fracCol <= c2 + 1) {
+          remove(ref(db, `board/zones/${id}`));
+          break;
         }
       }
     }
@@ -1981,28 +2238,41 @@
     // Zone label modal confirm / cancel
     document.getElementById('zone-confirm').addEventListener('click', () => {
       const label = document.getElementById('zone-label-input').value.trim();
-      const id    = 'z_' + Date.now();
-      const data  = {
-        id,
-        row1:  Math.min(zoneDraftR1, zoneDraftR2),
-        col1:  Math.min(zoneDraftC1, zoneDraftC2),
-        row2:  Math.max(zoneDraftR1, zoneDraftR2),
-        col2:  Math.max(zoneDraftC1, zoneDraftC2),
-        color: document.getElementById('draw-color').value,
-        label: label
-      };
-      set(ref(db, `board/zones/${id}`), data);
-      lastDrawnRef = `board/zones/${id}`;
+      if (labelModalMode === 'stroke' && penTempData) {
+        penTempData.label = label;
+        set(ref(db, `board/strokes/${penTempData.id}`), penTempData);
+        lastDrawnRef = `board/strokes/${penTempData.id}`;
+        penTempData = null;
+      } else {
+        const id   = 'z_' + Date.now();
+        const data = {
+          id,
+          row1:  Math.min(zoneDraftR1, zoneDraftR2),
+          col1:  Math.min(zoneDraftC1, zoneDraftC2),
+          row2:  Math.max(zoneDraftR1, zoneDraftR2),
+          col2:  Math.max(zoneDraftC1, zoneDraftC2),
+          color: document.getElementById('draw-color').value,
+          label
+        };
+        set(ref(db, `board/zones/${id}`), data);
+        lastDrawnRef = `board/zones/${id}`;
+      }
+      labelModalMode = 'zone';
+      document.getElementById('zone-modal-title').textContent = 'New Zone';
       document.getElementById('zone-modal').classList.remove('show');
     });
 
-    document.getElementById('zone-cancel').addEventListener('click', () => {
+    function closeZoneModal() {
+      labelModalMode = 'zone';
+      penTempData = null;
+      document.getElementById('zone-modal-title').textContent = 'New Zone';
       document.getElementById('zone-modal').classList.remove('show');
-    });
+    }
+
+    document.getElementById('zone-cancel').addEventListener('click', closeZoneModal);
 
     document.getElementById('zone-modal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('zone-modal'))
-        document.getElementById('zone-modal').classList.remove('show');
+      if (e.target === document.getElementById('zone-modal')) closeZoneModal();
     });
 
     document.getElementById('zone-label-input').addEventListener('keydown', (e) => {
@@ -2016,8 +2286,230 @@
       lastDrawnRef = null;
     });
 
+    // ── Stroke hover tooltip ──────────────────────────────────────
+    const strokeTooltipEl = document.getElementById('stroke-tooltip');
+
+    document.querySelector('.map-area').addEventListener('mousemove', (e) => {
+      if (drawMode) { strokeTooltipEl.style.display = 'none'; return; }
+      const rect        = grid.getBoundingClientRect();
+      const cs          = cellSize();
+      const { fracCol, fracRow } = screenToFrac(e.clientX - rect.left, e.clientY - rect.top);
+      const hoverRadius = 14 / cs; // 14px in cell units
+
+      let foundLabel = null;
+
+      // Check strokes
+      for (const s of Object.values(drawStrokes)) {
+        if (!s.label || !s.pts) continue;
+        for (let i = 0; i < s.pts.length; i += 2) {
+          const dx = s.pts[i] - fracCol, dy = s.pts[i+1] - fracRow;
+          if (dx*dx + dy*dy < hoverRadius*hoverRadius) { foundLabel = s.label; break; }
+        }
+        if (foundLabel) break;
+      }
+
+      // Check zones (if no stroke label found yet)
+      if (!foundLabel) {
+        for (const z of Object.values(zones)) {
+          if (!z.label) continue;
+          const r1 = Math.min(z.row1, z.row2), r2 = Math.max(z.row1, z.row2);
+          const c1 = Math.min(z.col1, z.col2), c2 = Math.max(z.col1, z.col2);
+          if (fracRow >= r1 && fracRow <= r2 + 1 && fracCol >= c1 && fracCol <= c2 + 1) {
+            foundLabel = z.label;
+            break;
+          }
+        }
+      }
+
+      if (foundLabel) {
+        strokeTooltipEl.textContent   = foundLabel;
+        strokeTooltipEl.style.display = 'block';
+        strokeTooltipEl.style.left    = (e.clientX + 14) + 'px';
+        strokeTooltipEl.style.top     = (e.clientY - 30) + 'px';
+      } else {
+        strokeTooltipEl.style.display = 'none';
+      }
+    });
+
+    document.querySelector('.map-area').addEventListener('mouseleave', () => {
+      strokeTooltipEl.style.display = 'none';
+    });
+
     buildGrid();
+
+    // ── Map Editor ───────────────────────────────────────────────
+    onValue(ref(db, 'board/cells'), (snap) => {
+      boardCells = snap.val() || {};
+      buildGrid();
+    });
+
+    const mapEditorOverlay = document.getElementById('map-editor-overlay');
+    let editorCells    = {};      // working copy: { "r_c": tileType } while editor is open
+    let editorCols     = 8;
+    let editorRows     = 11;
+    let editorMode     = 'quick'; // 'quick' | 'detailed'
+    let selectedTile   = 'void';  // active palette selection in detailed mode
+    let editorPainting = false;
+    let editorPaintVoid = true;   // quick mode: true = painting void, false = active
+
+    function cellEditorClass(tileVal) {
+      if (!tileVal) return 'editor-cell';
+      if (tileVal === 'void' || tileVal === true) return 'editor-cell void';
+      return 'editor-cell tile-' + tileVal;
+    }
+
+    function buildEditorGrid() {
+      const gridEl = document.getElementById('editor-grid');
+      gridEl.style.gridTemplateColumns = `repeat(${editorCols}, 1fr)`;
+      gridEl.innerHTML = '';
+      for (let r = 0; r < editorRows; r++) {
+        for (let c = 0; c < editorCols; c++) {
+          const cell = document.createElement('div');
+          cell.className = cellEditorClass(editorCells[r + '_' + c]);
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function paintEditorCell(el) {
+      const key = el.dataset.r + '_' + el.dataset.c;
+      if (editorMode === 'quick') {
+        el.className = editorPaintVoid ? 'editor-cell void' : 'editor-cell';
+        if (editorPaintVoid) editorCells[key] = 'void';
+        else delete editorCells[key];
+      } else {
+        if (selectedTile === 'erase') {
+          el.className = 'editor-cell';
+          delete editorCells[key];
+        } else {
+          el.className = cellEditorClass(selectedTile);
+          editorCells[key] = selectedTile;
+        }
+      }
+    }
+
+    document.getElementById('editor-grid').addEventListener('mousedown', (e) => {
+      const cell = e.target.closest('.editor-cell');
+      if (!cell) return;
+      e.preventDefault();
+      editorPainting = true;
+      if (editorMode === 'quick') editorPaintVoid = !cell.classList.contains('void');
+      paintEditorCell(cell);
+    });
+
+    document.getElementById('editor-grid').addEventListener('mousemove', (e) => {
+      if (!editorPainting) return;
+      const cell = e.target.closest('.editor-cell');
+      if (cell) paintEditorCell(cell);
+    });
+
+    document.addEventListener('mouseup', () => { editorPainting = false; });
+
+    document.getElementById('editor-cols').addEventListener('change', (e) => {
+      editorCols = Math.max(2, Math.min(30, parseInt(e.target.value) || 8));
+      e.target.value = editorCols;
+      buildEditorGrid();
+    });
+
+    document.getElementById('editor-rows').addEventListener('change', (e) => {
+      editorRows = Math.max(2, Math.min(30, parseInt(e.target.value) || 11));
+      e.target.value = editorRows;
+      buildEditorGrid();
+    });
+
+    // Mode toggle
+    function setEditorMode(mode) {
+      editorMode = mode;
+      document.getElementById('mode-quick').classList.toggle('active', mode === 'quick');
+      document.getElementById('mode-detailed').classList.toggle('active', mode === 'detailed');
+      document.getElementById('tile-palette').style.display = mode === 'detailed' ? 'flex' : 'none';
+      document.getElementById('editor-hint').textContent = mode === 'quick'
+        ? 'Click or drag cells to toggle active (green) / void (black).'
+        : 'Select a tile then click or drag to paint cells.';
+    }
+
+    document.getElementById('mode-quick').addEventListener('click',    () => setEditorMode('quick'));
+    document.getElementById('mode-detailed').addEventListener('click',  () => setEditorMode('detailed'));
+
+    // Palette selection
+    document.getElementById('tile-palette').addEventListener('click', (e) => {
+      const swatch = e.target.closest('.palette-swatch');
+      if (!swatch) return;
+      selectedTile = swatch.dataset.tile;
+      document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    });
+
+    document.getElementById('map-editor-btn').addEventListener('click', () => {
+      editorCols  = GRID_COLS;
+      editorRows  = GRID_ROWS;
+      editorCells = Object.assign({}, boardCells);
+      document.getElementById('editor-cols').value = editorCols;
+      document.getElementById('editor-rows').value = editorRows;
+      setEditorMode('quick');
+      buildEditorGrid();
+      mapEditorOverlay.classList.add('show');
+    });
+
+    document.getElementById('editor-cancel').addEventListener('click', () => {
+      mapEditorOverlay.classList.remove('show');
+    });
+    mapEditorOverlay.addEventListener('click', (e) => {
+      if (e.target === mapEditorOverlay) mapEditorOverlay.classList.remove('show');
+    });
+
+    document.getElementById('editor-reset').addEventListener('click', () => {
+      editorCells = {};
+      buildEditorGrid();
+    });
+
+    document.getElementById('editor-apply').addEventListener('click', () => {
+      set(ref(db, 'board/cols'),  editorCols);
+      set(ref(db, 'board/rows'),  editorRows);
+      set(ref(db, 'board/cells'), Object.keys(editorCells).length ? editorCells : null);
+      mapEditorOverlay.classList.remove('show');
+    });
+
   </script>
+
+  <!-- Map Editor modal -->
+  <div class="overlay" id="map-editor-overlay">
+    <div class="map-editor-modal">
+      <h2>Map Editor</h2>
+      <div class="editor-mode-toggle">
+        <button class="mode-btn active" id="mode-quick">Quick</button>
+        <button class="mode-btn"        id="mode-detailed">Detailed</button>
+      </div>
+      <div class="editor-dims">
+        <label>Columns</label>
+        <input type="number" id="editor-cols" min="2" max="30" value="8">
+        <span>×</span>
+        <label>Rows</label>
+        <input type="number" id="editor-rows" min="2" max="30" value="11">
+      </div>
+      <div class="tile-palette" id="tile-palette" style="display:none">
+        <div class="palette-swatch selected" data-tile="void">⬛ Void</div>
+        <div class="palette-swatch" data-tile="erase">⌫ Erase</div>
+        <div class="palette-swatch" data-tile="default">⬛ Default</div>
+        <div class="palette-swatch" data-tile="cobblestone">🪨 Cobble</div>
+        <div class="palette-swatch" data-tile="forest">🌿 Forest</div>
+        <div class="palette-swatch" data-tile="desert">🏜️ Desert</div>
+        <div class="palette-swatch" data-tile="water">💧 Water</div>
+        <div class="palette-swatch" data-tile="volcanic">🌋 Volcanic</div>
+      </div>
+      <p class="editor-hint" id="editor-hint">Click or drag cells to toggle active (green) / void (black).</p>
+      <div class="editor-grid-wrap">
+        <div class="editor-grid" id="editor-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-dark" id="editor-cancel">Cancel</button>
+        <button class="btn btn-dark" id="editor-reset">All Active</button>
+        <button class="btn btn-red"  id="editor-apply">Apply</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
