@@ -976,6 +976,353 @@
       margin-bottom: 16px;
     }
 
+
+    /* ── Initiative Panel ── */
+    #initiative-panel {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 260px;
+      background: #12122a;
+      border: 2px solid #8b0000;
+      border-radius: 10px;
+      z-index: 900;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      user-select: none;
+    }
+    #initiative-panel.visible { display: flex; }
+    #initiative-panel.collapsed .init-body { display: none; }
+
+    .init-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #1a1a3a;
+      border-radius: 8px 8px 0 0;
+      cursor: grab;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .init-header:active { cursor: grabbing; }
+
+    .init-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #c0392b;
+      flex: 1;
+    }
+    .init-round-label {
+      font-size: 0.78rem;
+      color: #888;
+    }
+    .init-collapse-btn {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .init-collapse-btn:hover { color: #fff; background: #2e2e5a; }
+
+    .init-body { display: flex; flex-direction: column; }
+
+    .init-list {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .init-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #2a2a4a;
+      background: #1a1a30;
+      cursor: grab;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .init-entry:active { cursor: grabbing; }
+    .init-entry.current {
+      background: #1e0a0a;
+      border-color: #c0392b;
+      box-shadow: 0 0 8px rgba(192,57,43,0.4);
+    }
+    .init-entry.drag-over { border-color: #8b0000; background: #22223a; }
+    .init-entry.dragging  { opacity: 0.4; }
+
+    .init-arrow {
+      font-size: 0.75rem;
+      color: #c0392b;
+      width: 12px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .init-portrait {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #fff;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+    .init-name {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .init-footer {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-top: 1px solid #2a2a4a;
+    }
+    .init-turn-btns, .init-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .init-turn-btns .btn,
+    .init-actions  .btn {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+    }
+    .init-empty {
+      text-align: center;
+      color: #555;
+      font-size: 0.8rem;
+      padding: 16px 0;
+    }
+
+    /* ── Settings Panel ── */
+    #settings-panel {
+      position: fixed;
+      top: 56px;
+      right: 16px;
+      width: 220px;
+      background: #12122a;
+      border: 2px solid #8b0000;
+      border-radius: 10px;
+      z-index: 950;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      padding: 14px;
+      gap: 10px;
+    }
+    #settings-panel.visible { display: flex; }
+    .settings-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+    }
+    .skin-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .skin-opt {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #1e1e3a;
+      color: #ccc;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: filter 0.15s;
+    }
+    .skin-opt:hover { filter: brightness(1.3); }
+    .skin-opt.active { border-color: #c0392b; color: #fff; background: #3a1010; }
+
+    /* ══════════════════════════════════════════════════════
+       SKIN: PARCHMENT
+    ══════════════════════════════════════════════════════ */
+    body.skin-parchment {
+      background-color: #ddd0aa;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 15% 20%, rgba(120,80,20,0.14) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 80%, rgba(100,60,10,0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 50%, rgba(200,170,110,0.08) 0%, transparent 65%);
+      color: #1a0a00;
+    }
+    body.skin-parchment header {
+      background-color: #b8915a;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+      border-bottom: 3px solid #7a0000;
+    }
+    body.skin-parchment header h1 { color: #7a0000; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    body.skin-parchment .conn-pill { color: #4a2a0a; }
+    body.skin-parchment .btn-dark {
+      background-color: #c8a070;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+      color: #1a0a00;
+      border-color: #7a4a1a;
+    }
+    body.skin-parchment .btn-red { background: #7a0000; color: #f5e6c8; }
+    body.skin-parchment .btn-ghost { color: #7a0000; border-color: #7a0000; }
+    body.skin-parchment .zoom-controls { background-color: #c8a070; border-color: #7a4a1a; }
+    body.skin-parchment .zoom-controls button { color: #1a0a00; }
+    body.skin-parchment .zoom-controls button:hover { background: #a07840; color: #fff; }
+    body.skin-parchment .zoom-label { color: #4a2a0a; }
+    body.skin-parchment #theme-select { background-color: #c8a070; color: #1a0a00; border-color: #7a4a1a; }
+    body.skin-parchment .sidebar {
+      background-color: #d0c09a;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+      border-right: 2px solid #7a0000;
+    }
+    body.skin-parchment .sidebar-title { color: #7a0000; border-bottom: 1px solid #7a4a1a; padding-bottom: 6px; }
+    body.skin-parchment .sidebar-empty { color: #7a4a1a; }
+    body.skin-parchment .sidebar-toggle { background-color: #b8915a; border-color: #7a4a1a; color: #1a0a00; }
+    body.skin-parchment .sidebar-toggle:hover { background: #a07840; }
+    body.skin-parchment .token-card {
+      background-color: #e8d8b0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+      border: 1px solid #9a6a2a;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    body.skin-parchment .token-card-name { color: #1a0a00; }
+    body.skin-parchment .size-badge { background: #9a6a2a; color: #f5e6c8; }
+    body.skin-parchment .draw-toolbar { background-color: #c8a070; border-bottom: 2px solid #7a0000; }
+    body.skin-parchment .draw-tool { background-color: #ddd0aa; border-color: #7a4a1a; color: #1a0a00; }
+    body.skin-parchment .draw-tool:hover { background: #b8915a; color: #fff; }
+    body.skin-parchment .draw-tool.active { background: #7a0000; border-color: #7a0000; color: #fff; }
+    body.skin-parchment .draw-sep { background: #7a4a1a; }
+    body.skin-parchment .draw-width-row { color: #1a0a00; }
+    body.skin-parchment .map-area { background: #c0b090; }
+    body.skin-parchment .overlay { background: rgba(30,10,0,0.78); }
+    body.skin-parchment .modal,
+    body.skin-parchment .zone-label-modal,
+    body.skin-parchment .map-editor-modal {
+      background-color: #ede3c0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+      color: #1a0a00;
+      border: 2px solid #7a0000;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+    }
+    body.skin-parchment .modal h2,
+    body.skin-parchment .zone-label-modal h2,
+    body.skin-parchment .map-editor-modal h2 { color: #7a0000; border-bottom: 1px solid #9a6a2a; padding-bottom: 8px; }
+    body.skin-parchment .field label { color: #4a2a0a; }
+    body.skin-parchment .field input[type="text"],
+    body.skin-parchment .field select { background-color: #d8c898; color: #1a0a00; border-color: #7a4a1a; }
+    body.skin-parchment .mode-btn { background: #c8a070; color: #1a0a00; border-color: #7a4a1a; }
+    body.skin-parchment .mode-btn.active { background: #7a0000; color: #f5e6c8; border-color: #7a0000; }
+    body.skin-parchment .editor-hint { color: #4a2a0a; }
+    body.skin-parchment .editor-cell { background: #d8c898; border-color: #9a6a2a; }
+    body.skin-parchment .editor-cell.void { background: #1a0a00; }
+    body.skin-parchment #initiative-panel {
+      background-color: #d0c09a;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+      border: 2px solid #7a0000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    body.skin-parchment .init-header { background-color: #b8915a; border-bottom: 2px solid #7a0000; }
+    body.skin-parchment .init-title { color: #7a0000; }
+    body.skin-parchment .init-round-label { color: #4a2a0a; }
+    body.skin-parchment .init-collapse-btn { color: #4a2a0a; }
+    body.skin-parchment .init-collapse-btn:hover { background: #a07840; color: #fff; }
+    body.skin-parchment .init-entry { background-color: #e8d8b0; border: 1px solid #9a6a2a; }
+    body.skin-parchment .init-entry.current { background-color: #f5edd0; border: 2px solid #7a0000; box-shadow: 0 0 10px rgba(122,0,0,0.2); }
+    body.skin-parchment .init-name { color: #1a0a00; }
+    body.skin-parchment .init-arrow { color: #7a0000; }
+    body.skin-parchment .init-footer { border-top: 2px solid #9a6a2a; }
+    body.skin-parchment .init-empty { color: #7a4a1a; }
+    body.skin-parchment #stroke-tooltip { background: #b8915a; color: #1a0a00; border-color: #7a0000; }
+    body.skin-parchment #settings-panel { background-color: #ede3c0; border-color: #7a0000; }
+    body.skin-parchment .settings-label { color: #7a4a1a; }
+    body.skin-parchment .skin-opt { background: #d8c898; color: #1a0a00; border-color: #9a6a2a; }
+    body.skin-parchment .skin-opt.active { background: #f5edd0; border-color: #7a0000; color: #7a0000; }
+
+    /* ══════════════════════════════════════════════════════
+       SKIN: ILLUMINATED MANUSCRIPT
+    ══════════════════════════════════════════════════════ */
+    body.skin-manuscript {
+      background: #f0e8d0;
+      color: #1a1a2e;
+    }
+    body.skin-manuscript header { background: #1a1f3a; border-bottom-color: #c9a227; }
+    body.skin-manuscript header h1 { color: #c9a227; }
+    body.skin-manuscript .conn-pill { color: #c9a227; }
+    body.skin-manuscript .btn-dark { background: #1a1f3a; color: #c9a227; border-color: #c9a227; }
+    body.skin-manuscript .btn-red { background: #8b0000; color: #f0e8d0; }
+    body.skin-manuscript .btn-ghost { color: #c9a227; border-color: #c9a227; }
+    body.skin-manuscript .zoom-controls { background: #1a1f3a; border-color: #c9a227; }
+    body.skin-manuscript .zoom-controls button { color: #c9a227; }
+    body.skin-manuscript .zoom-controls button:hover { background: #2e2a4a; color: #fff; }
+    body.skin-manuscript .zoom-label { color: #c9a227; }
+    body.skin-manuscript #theme-select { background: #1a1f3a; color: #c9a227; border-color: #c9a227; }
+    body.skin-manuscript .sidebar { background: #1a1f3a; border-right: 1px solid #c9a227; }
+    body.skin-manuscript .sidebar-title { color: #c9a227; border-bottom-color: #c9a227; }
+    body.skin-manuscript .sidebar-empty { color: #6a5a1a; }
+    body.skin-manuscript .sidebar-toggle { background: #1a1f3a; border-color: #c9a227; color: #c9a227; }
+    body.skin-manuscript .sidebar-toggle:hover { background: #252d52; color: #f0e8d0; }
+    body.skin-manuscript .token-card { background: #252d52; border-color: #c9a227; }
+    body.skin-manuscript .token-card-name { color: #f0e8d0; }
+    body.skin-manuscript .size-badge { background: #c9a227; color: #1a1f3a; }
+    body.skin-manuscript .draw-toolbar { background: #1a1f3a; border-bottom-color: #c9a227; }
+    body.skin-manuscript .draw-tool { background: #252d52; border-color: #c9a227; color: #c9a227; }
+    body.skin-manuscript .draw-tool:hover { background: #2e2a4a; color: #fff; }
+    body.skin-manuscript .draw-tool.active { background: #8b0000; border-color: #8b0000; color: #fff; }
+    body.skin-manuscript .draw-sep { background: #c9a227; }
+    body.skin-manuscript .draw-width-row { color: #c9a227; }
+    body.skin-manuscript .map-area { background: #c8bea0; }
+    body.skin-manuscript .overlay { background: rgba(10,10,30,0.85); }
+    body.skin-manuscript .modal,
+    body.skin-manuscript .zone-label-modal,
+    body.skin-manuscript .map-editor-modal { background: #1a1f3a; color: #f0e8d0; border: 2px solid #c9a227; }
+    body.skin-manuscript .modal h2,
+    body.skin-manuscript .zone-label-modal h2,
+    body.skin-manuscript .map-editor-modal h2 { color: #c9a227; }
+    body.skin-manuscript .field label { color: #c9a227; }
+    body.skin-manuscript .field input[type="text"],
+    body.skin-manuscript .field select { background: #252d52; color: #f0e8d0; border-color: #c9a227; }
+    body.skin-manuscript .mode-btn { background: #252d52; color: #c9a227; border-color: #c9a227; }
+    body.skin-manuscript .mode-btn.active { background: #c9a227; color: #1a1f3a; border-color: #c9a227; }
+    body.skin-manuscript .editor-hint { color: #c9a227; }
+    body.skin-manuscript .editor-cell { background: #252d52; border-color: #3a4570; }
+    body.skin-manuscript .editor-cell.void { background: #080810; }
+    body.skin-manuscript #initiative-panel { background: #1a1f3a; border-color: #c9a227; }
+    body.skin-manuscript .init-header { background: #252d52; border-bottom-color: #c9a227; }
+    body.skin-manuscript .init-title { color: #c9a227; }
+    body.skin-manuscript .init-round-label { color: #8b7a3a; }
+    body.skin-manuscript .init-collapse-btn { color: #c9a227; }
+    body.skin-manuscript .init-collapse-btn:hover { background: #2e2a4a; color: #fff; }
+    body.skin-manuscript .init-entry { background: #1e2545; border-color: #3a4570; }
+    body.skin-manuscript .init-entry.current { background: #2a1520; border-color: #c9a227; box-shadow: 0 0 8px rgba(201,162,39,0.4); }
+    body.skin-manuscript .init-name { color: #f0e8d0; }
+    body.skin-manuscript .init-arrow { color: #c9a227; }
+    body.skin-manuscript .init-footer { border-top-color: #c9a227; }
+    body.skin-manuscript .init-empty { color: #5c6a9e; }
+    body.skin-manuscript #stroke-tooltip { background: #1a1f3a; color: #c9a227; border-color: #c9a227; }
+    body.skin-manuscript #settings-panel { background: #1a1f3a; border-color: #c9a227; }
+    body.skin-manuscript .settings-label { color: #c9a227; }
+    body.skin-manuscript .skin-opt { background: #252d52; color: #c9a227; border-color: #3a4570; }
+    body.skin-manuscript .skin-opt.active { background: #1e2545; border-color: #c9a227; color: #fff; }
   </style>
 </head>
 <body>
@@ -993,10 +1340,8 @@
         <button id="zoom-in">+</button>
       </div>
       <button class="btn btn-dark" id="rotate-btn">⟳ Rotate</button>
-      <label  class="btn btn-dark" for="bg-upload">🗺 Upload Map</label>
       <input  type="file" id="bg-upload"  accept="image/*">
       <input  type="file" id="img-upload" accept="image/*">
-      <button class="btn-ghost" id="clear-map-btn">✕ Clear Map</button>
       <select id="theme-select" title="Map theme">
         <option value="default">⬛ Default</option>
         <option value="cobblestone">🪨 Cobblestone</option>
@@ -1006,8 +1351,10 @@
         <option value="volcanic">🌋 Volcanic</option>
       </select>
       <button class="btn btn-dark" id="map-editor-btn">🗺 Map Editor</button>
+      <button class="btn btn-dark" id="initiative-btn">⚔ Initiative</button>
       <button class="btn btn-dark" id="draw-mode-btn">✏ Draw</button>
       <button class="btn btn-red"  id="add-token-btn">+ Add Token</button>
+      <button class="btn btn-dark" id="settings-btn" title="Settings">⚙</button>
     </div>
   </header>
 
@@ -1594,6 +1941,7 @@
       arr.forEach(t => {
         const card = document.createElement('div');
         card.className = 'token-card';
+        card.title = t.name || 'Unnamed';
 
         const chip = document.createElement('div');
         chip.className = 'mini-chip';
@@ -1986,7 +2334,7 @@
         if (isPortrait) {
           pos = `top:${r1*cs}px;left:${c1*cs}px;width:${(c2-c1+1)*cs}px;height:${(r2-r1+1)*cs}px;`;
         } else {
-          pos = `top:${c1*cs}px;left:${(10-r2)*cs}px;width:${(r2-r1+1)*cs}px;height:${(c2-c1+1)*cs}px;`;
+          pos = `top:${c1*cs}px;left:${(GRID_ROWS-1-r2)*cs}px;width:${(r2-r1+1)*cs}px;height:${(c2-c1+1)*cs}px;`;
         }
         el.style.cssText = pos + `background:${z.color}44;border:2px solid ${z.color}bb;`;
         layer.appendChild(el);
@@ -2472,7 +2820,316 @@
       mapEditorOverlay.classList.remove('show');
     });
 
+    // ── Settings / Skin selector ─────────────────────────────────
+    {
+      const settingsBtn   = document.getElementById('settings-btn');
+      const settingsPanel = document.getElementById('settings-panel');
+      const skinOpts      = document.querySelectorAll('.skin-opt');
+
+      // Apply a skin by class name ('' = dark default)
+      function applySkin(skin) {
+        document.body.classList.remove('skin-parchment', 'skin-manuscript');
+        if (skin) document.body.classList.add(skin);
+        skinOpts.forEach(b => b.classList.toggle('active', b.dataset.skin === skin));
+        localStorage.setItem('uiSkin', skin);
+      }
+
+      // Load saved skin on startup
+      applySkin(localStorage.getItem('uiSkin') || 'skin-parchment');
+
+      // Toggle panel
+      settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsPanel.classList.toggle('visible');
+      });
+
+      // Close panel when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!settingsPanel.contains(e.target)) {
+          settingsPanel.classList.remove('visible');
+        }
+      });
+
+      // Skin buttons
+      skinOpts.forEach(btn => {
+        btn.addEventListener('click', () => {
+          applySkin(btn.dataset.skin);
+          settingsPanel.classList.remove('visible');
+        });
+      });
+    }
+
+    // ── Initiative Tracker ────────────────────────────────────────
+    let initEntries      = {};
+    let initRound        = 1;
+    let initCurrentIndex = 0;
+
+    const initPanel = document.getElementById('initiative-panel');
+    const initList  = document.getElementById('init-list');
+
+    // Toggle panel open/close
+    document.getElementById('initiative-btn').addEventListener('click', () => {
+      initPanel.classList.toggle('visible');
+    });
+
+    // Collapse / expand body
+    document.getElementById('init-collapse-btn').addEventListener('click', () => {
+      const collapsed = initPanel.classList.toggle('collapsed');
+      document.getElementById('init-collapse-btn').textContent = collapsed ? '+' : '−';
+    });
+
+    // Panel drag (move freely on screen)
+    {
+      const handle = document.getElementById('init-drag-handle');
+      let dragging = false, startX, startY, startLeft, startTop;
+
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.target.id === 'init-collapse-btn') return;
+        dragging = true;
+        handle.setPointerCapture(e.pointerId);
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = initPanel.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop  = rect.top;
+        initPanel.style.right = 'auto'; // detach from right anchor
+      });
+
+      handle.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        initPanel.style.left = (startLeft + e.clientX - startX) + 'px';
+        initPanel.style.top  = (startTop  + e.clientY - startY) + 'px';
+      });
+
+      const stopDrag = () => { dragging = false; };
+      handle.addEventListener('pointerup',     stopDrag);
+      handle.addEventListener('pointercancel', stopDrag);
+    }
+
+    // Firebase listeners
+    onValue(ref(db, 'initiative/round'), (snap) => {
+      initRound = snap.val() || 1;
+      document.getElementById('init-round-label').textContent = `Round ${initRound}`;
+    });
+
+    onValue(ref(db, 'initiative/currentIndex'), (snap) => {
+      initCurrentIndex = snap.val() ?? 0;
+      renderInitiative();
+    });
+
+    onValue(ref(db, 'initiative/entries'), (snap) => {
+      initEntries = snap.val() || {};
+      renderInitiative();
+    });
+
+    function getSortedEntries() {
+      return Object.values(initEntries).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+
+    // Drag-to-reorder state
+    let dragSrcId = null;
+
+    function renderInitiative() {
+      const sorted = getSortedEntries();
+      initList.innerHTML = '';
+
+      if (!sorted.length) {
+        initList.innerHTML = '<div class="init-empty">No entries. Import tokens to begin.</div>';
+        return;
+      }
+
+      sorted.forEach((entry, idx) => {
+        const row = document.createElement('div');
+        row.className = 'init-entry' + (idx === initCurrentIndex ? ' current' : '');
+        row.dataset.id  = entry.id;
+        row.draggable   = true;
+
+        // Current turn arrow
+        const arrow = document.createElement('span');
+        arrow.className   = 'init-arrow';
+        arrow.textContent = idx === initCurrentIndex ? '▶' : '';
+
+        // Portrait: image from live token data if available, else color chip
+        const portrait = document.createElement('div');
+        portrait.className = 'init-portrait';
+        const liveImg = entry.tokenRef ? tokens[entry.tokenRef]?.image : null;
+        if (liveImg) {
+          portrait.style.backgroundImage = `url(${liveImg})`;
+          portrait.style.background = `url(${liveImg}) center/cover`;
+        } else {
+          portrait.style.background = entry.color || '#c0392b';
+          portrait.textContent = (entry.name || '?')[0].toUpperCase();
+        }
+
+        // Name
+        const name = document.createElement('div');
+        name.className   = 'init-name';
+        name.textContent = entry.name || 'Unknown';
+        name.title       = entry.name || 'Unknown';
+
+        // Hold-to-delete
+        const del = document.createElement('button');
+        del.className = 'del-btn';
+        del.title     = 'Hold to delete';
+        del.innerHTML = `
+          <svg class="del-ring" viewBox="0 0 24 24">
+            <circle class="ring-track" cx="12" cy="12" r="10"/>
+            <circle class="ring-fill"  cx="12" cy="12" r="10"/>
+          </svg>
+          <span class="del-icon">✕</span>`;
+
+        let holdTimer = null;
+        del.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          del.setPointerCapture(e.pointerId);
+          del.classList.add('holding');
+          holdTimer = setTimeout(() => {
+            remove(ref(db, `initiative/entries/${entry.id}`));
+            // Clamp currentIndex after deletion
+            const remaining = getSortedEntries().filter(e => e.id !== entry.id).length;
+            if (initCurrentIndex >= remaining && remaining > 0) {
+              set(ref(db, 'initiative/currentIndex'), remaining - 1);
+            }
+          }, 1000);
+        });
+        const cancelHold = () => { del.classList.remove('holding'); clearTimeout(holdTimer); };
+        del.addEventListener('pointerup',     cancelHold);
+        del.addEventListener('pointercancel', cancelHold);
+
+        // Drag events for reordering
+        row.addEventListener('dragstart', (e) => {
+          dragSrcId = row.dataset.id;
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => row.classList.add('dragging'), 0);
+        });
+
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          initList.querySelectorAll('.init-entry').forEach(r => r.classList.remove('drag-over'));
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          initList.querySelectorAll('.init-entry').forEach(r => r.classList.remove('drag-over'));
+          row.classList.add('drag-over');
+        });
+
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (!dragSrcId || dragSrcId === row.dataset.id) return;
+
+          const currentEntry = sorted[initCurrentIndex]; // track who has the turn
+          const srcIdx = sorted.findIndex(e => e.id === dragSrcId);
+          const dstIdx = sorted.findIndex(e => e.id === row.dataset.id);
+
+          const reordered = [...sorted];
+          const [moved] = reordered.splice(srcIdx, 1);
+          reordered.splice(dstIdx, 0, moved);
+
+          const updates = {};
+          reordered.forEach((en, i) => {
+            updates[`initiative/entries/${en.id}/order`] = i;
+          });
+
+          // Keep current turn indicator on the same entry
+          if (currentEntry) {
+            const newIdx = reordered.findIndex(e => e.id === currentEntry.id);
+            if (newIdx !== -1) updates['initiative/currentIndex'] = newIdx;
+          }
+
+          update(ref(db), updates);
+        });
+
+        row.appendChild(arrow);
+        row.appendChild(portrait);
+        row.appendChild(name);
+        row.appendChild(del);
+        initList.appendChild(row);
+      });
+    }
+
+    // Next turn
+    document.getElementById('init-next-btn').addEventListener('click', () => {
+      const count = getSortedEntries().length;
+      if (!count) return;
+      const next = (initCurrentIndex + 1) % count;
+      const updates = { 'initiative/currentIndex': next };
+      if (next === 0) updates['initiative/round'] = initRound + 1;
+      update(ref(db), updates);
+    });
+
+    // Prev turn
+    document.getElementById('init-prev-btn').addEventListener('click', () => {
+      const count = getSortedEntries().length;
+      if (!count) return;
+      const prev = (initCurrentIndex - 1 + count) % count;
+      const updates = { 'initiative/currentIndex': prev };
+      if (initCurrentIndex === 0 && initRound > 1) updates['initiative/round'] = initRound - 1;
+      update(ref(db), updates);
+    });
+
+    // Reset round + turn to start
+    document.getElementById('init-reset-btn').addEventListener('click', () => {
+      update(ref(db), { 'initiative/currentIndex': 0, 'initiative/round': 1 });
+    });
+
+    // Import all tokens from the board
+    document.getElementById('init-import-btn').addEventListener('click', () => {
+      const arr = Object.values(tokens);
+      if (!arr.length) return;
+      const updates = {};
+      arr.forEach((t, i) => {
+        const entryId = 'e_' + t.id;
+        // Preserve existing order if entry already exists
+        const existingOrder = initEntries[entryId]?.order ?? i;
+        updates[`initiative/entries/${entryId}`] = {
+          id:       entryId,
+          tokenRef: t.id,
+          name:     t.name  || 'Unknown',
+          color:    t.color || '#c0392b',
+          order:    existingOrder
+        };
+      });
+      update(ref(db), updates);
+    });
+
   </script>
+
+  <!-- Settings Panel -->
+  <div id="settings-panel">
+    <div class="settings-label">UI Skin</div>
+    <div class="skin-options">
+      <button class="skin-opt" data-skin="">⚫ Dark</button>
+      <button class="skin-opt" data-skin="skin-parchment">📜 Parchment</button>
+      <button class="skin-opt" data-skin="skin-manuscript">✦ Manuscript</button>
+    </div>
+  </div>
+
+  <!-- Initiative Panel -->
+  <div id="initiative-panel">
+    <div class="init-header" id="init-drag-handle">
+      <span class="init-title">⚔ Initiative</span>
+      <span class="init-round-label" id="init-round-label">Round 1</span>
+      <button class="init-collapse-btn" id="init-collapse-btn" title="Collapse">−</button>
+    </div>
+    <div class="init-body">
+      <div class="init-list" id="init-list">
+        <div class="init-empty">No entries. Import tokens to begin.</div>
+      </div>
+      <div class="init-footer">
+        <div class="init-turn-btns">
+          <button class="btn btn-dark" id="init-prev-btn">← Prev</button>
+          <button class="btn btn-dark" id="init-next-btn">Next →</button>
+        </div>
+        <div class="init-actions">
+          <button class="btn btn-dark" id="init-import-btn">⬇ Import Tokens</button>
+          <button class="btn btn-dark" id="init-reset-btn">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Map Editor modal -->
   <div class="overlay" id="map-editor-overlay">
@@ -2502,6 +3159,10 @@
       <p class="editor-hint" id="editor-hint">Click or drag cells to toggle active (green) / void (black).</p>
       <div class="editor-grid-wrap">
         <div class="editor-grid" id="editor-grid"></div>
+      </div>
+      <div class="modal-footer" style="margin-top:10px; border-top:1px solid #2a2a4a; padding-top:10px;">
+        <label class="btn btn-dark" for="bg-upload" style="cursor:pointer;">🗺 Upload Map</label>
+        <button class="btn-ghost" id="clear-map-btn">✕ Clear Map</button>
       </div>
       <div class="modal-footer">
         <button class="btn btn-dark" id="editor-cancel">Cancel</button>
